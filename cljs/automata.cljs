@@ -49,4 +49,26 @@
                      (take 60 (iterate (partial evolve-seq rule) row-zero)))]
     (draw-sequence (canvas) r s)))
 
+(defn get-checks []
+  (map #(.getElementById js/document (str "cb-" %)) (range 0 8)))
+
+(defn decode-rule [& checks]
+  (js/parseInt (apply str checks) 2))
+
+(defn check-to-bit [check]
+  (if (.-checked check) 1 0))
+
+(defn draw-onclick []
+  (draw-automata
+   (apply decode-rule (map check-to-bit (get-checks)))
+   sequence))
+
+(set!
+ (.-onclick (.getElementById js/document "draw"))
+ draw-onclick)
+
+(set!
+ (.-onclick (.getElementById js/document "clear"))
+ #(.clearRect (canvas) 0 0 300 300))
+
 (repl/connect "http://localhost:9000/repl")
