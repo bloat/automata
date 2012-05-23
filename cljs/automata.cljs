@@ -6,26 +6,47 @@
       (.getElementById "canvas")
       (.getContext "2d")))
 
+(defn black [c]
+  (set! (.-fillStyle c) "rgb(0,0,0)"))
+
 (defn draw-cell [c [x y] fill]
-  (set! (.-fillStyle c) "rgb(0,0,0)")
-  (let [xpos (* 6 x) ypos (* 6 y)]
+  (let [xpos (+ 147 (* 6 x)) ypos (* 6 y)]
     (if fill
       (.fillRect c xpos ypos 5 5)
       ;; (.strokeRect c xpos ypos 5 5)
       )))
 
-(def sequence [0 [true]])
+(def sequence [0 [1]])
 
 (defn xcoords [start cells]
   (let [end (+ start (count cells))]
     (range start end)))
 
 (defn draw-sequence [canvas row [start cells]]
-  (doseq [cell (map (fn [x c] [canvas [x row] c]) (xcoords start cells) cells)]
+  (black canvas)
+  (doseq [cell (map (fn [x c] [canvas [x row]  (= 1 c)]) (xcoords start cells) cells)]
     (apply draw-cell cell)))
 
 (defn rand-row [length]
-  (take length (repeatedly #(rand-nth [true false]))))
+  (take length (repeatedly #(rand-nth [0 1]))))
 
+(defn evolve-cell [rule [in1 in2 in3]]
+  (if (= 0 (bit-and
+            rule
+            (Math/pow 2 (js/parseInt (str in1 in2 in3) 2))))
+    0
+    1))
+
+(defn evolve [rule row] 
+  (map (partial evolve-cell rule) (partition 3 1 (concat [0 0] row [0 0]))))
+
+(defn evolve-seq [rule [start row]]
+  [(dec start) (evolve rule row)])
+
+(defn draw-automata [rule row-zero]
+  (doseq [[r s] (map vector
+                     (range)
+                     (take 60 (iterate (partial evolve-seq rule) row-zero)))]
+    (draw-sequence (canvas) r s)))
 
 (repl/connect "http://localhost:9000/repl")
