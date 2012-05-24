@@ -67,6 +67,10 @@
 (defn get-checks []
   (map #(.getElementById js/document (str "cb-" %)) (range 0 8)))
 
+(defn set-checks [rule]
+  (doseq [[c cb] (map #(vector (bit-and rule %1) %2) [128 64 32 16 8 4 2 1] (get-checks))]
+    (set! (.-checked cb) (not (= 0 c)))))
+
 (defn decode-rule [& checks]
   (js/parseInt (apply str checks) 2))
 
@@ -85,5 +89,12 @@
 (set!
  (.-onclick (.getElementById js/document "clear"))
  #(.clearRect (canvas) 0 0 300 300))
+
+(defn draw-rules [start]
+  (when (> start -1)
+    (.clearRect (canvas) 0 0 300 300)
+    (set-checks start)
+    (draw-automata start sequence)
+    (js/setTimeout #(draw-rules (dec start)) 5000)))
 
 (repl/connect "http://localhost:9000/repl")
