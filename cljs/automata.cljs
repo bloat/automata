@@ -16,16 +16,27 @@
       ;; (.strokeRect c xpos ypos 5 5)
       )))
 
-(def sequence [0 [1]])
+(def sequence [(repeat 0) (lazy-seq (cons 1 (repeat 0)))])
 
-(defn xcoords [start cells]
-  (let [end (+ start (count cells))]
-    (range start end)))
+(defn xcoords-lhs [cells]
+  (let [end (- (inc (count cells)))]
+    (range -1 end -1)))
 
-(defn draw-sequence [canvas row [start cells]]
-  (black canvas)
-  (doseq [cell (map (fn [x c] [canvas [x row]  (= 1 c)]) (xcoords start cells) cells)]
+(defn xcoords-rhs [cells]
+  (range 0 (count cells)))
+
+(defn draw-lhs [canvas row lhs]
+  (doseq [cell (map (fn [x c] [canvas [x row] (= 1 c)]) (xcoords-lhs lhs) lhs)]
     (apply draw-cell cell)))
+
+(defn draw-rhs [canvas row rhs]
+  (doseq [cell (map (fn [x c] [canvas [x row] (= 1 c)]) (xcoords-rhs rhs) rhs)]
+    (apply draw-cell cell)))
+
+(defn draw-sequence [canvas row [lhs rhs]]
+  (black canvas)
+  (draw-lhs canvas row (take 50 lhs))
+  (draw-rhs canvas row (take 50 rhs)))
 
 (defn rand-row [length]
   (take length (repeatedly #(rand-nth [0 1]))))
@@ -37,16 +48,20 @@
     0
     1))
 
-(defn evolve [rule row] 
-  (map (partial evolve-cell rule) (partition 3 1 (concat [0 0] row [0 0]))))
+(defn evolve-lhs [rule lhs rhs]
+  (map (comp (partial evolve-cell rule) reverse) (partition 3 1 (cons (first rhs) lhs))))
 
-(defn evolve-seq [rule [start row]]
-  [(dec start) (evolve rule row)])
+(defn evolve-rhs [rule lhs rhs]
+  (map (partial evolve-cell rule) (partition 3 1 (cons (first lhs) rhs))))
+
+(defn evolve-seq [rule [lhs rhs]]
+  [(evolve-lhs rule lhs rhs)
+   (evolve-rhs rule lhs rhs)])
 
 (defn draw-automata [rule row-zero]
   (doseq [[r s] (map vector
                      (range)
-                     (take 60 (iterate (partial evolve-seq rule) row-zero)))]
+                     (take 50 (iterate (partial evolve-seq rule) row-zero)))]
     (draw-sequence (canvas) r s)))
 
 (defn get-checks []
