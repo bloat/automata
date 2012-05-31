@@ -1,6 +1,14 @@
 (ns automata
   (:require [clojure.browser.repl :as repl]))
 
+(def CANVAS-SIZE 300)
+(def CELL-SIZE 5)
+(def CELL-GAP 1)
+(def CELL-INTERVAL (+ CELL-SIZE CELL-GAP))
+(def V-CELLS (int (/ CANVAS-SIZE 6)))
+(def LHS-CELLS (int (/ CANVAS-SIZE 12)))
+(def RHS-CELLS LHS-CELLS)
+
 (defn canvas []
   (-> js/document
       (.getElementById "canvas")
@@ -10,11 +18,10 @@
   (set! (.-fillStyle c) "rgb(0,0,0)"))
 
 (defn draw-cell [c [x y] fill]
-  (let [xpos (+ 147 (* 6 x)) ypos (* 6 y)]
-    (if fill
-      (.fillRect c xpos ypos 5 5)
-      ;; (.strokeRect c xpos ypos 5 5)
-      )))
+  (let [xpos (+ (- (/ CANVAS-SIZE 2) CELL-INTERVAL) (* CELL-INTERVAL x))
+        ypos (* CELL-INTERVAL y)]
+    (when fill
+      (.fillRect c xpos ypos CELL-SIZE CELL-SIZE))))
 
 (def sequence [(repeat 0) (lazy-seq (cons 1 (repeat 0)))])
 
@@ -35,11 +42,11 @@
 
 (defn draw-sequence [canvas row [lhs rhs]]
   (black canvas)
-  (draw-lhs canvas row (take 50 lhs))
-  (draw-rhs canvas row (take 50 rhs)))
+  (draw-lhs canvas row (take LHS-CELLS lhs))
+  (draw-rhs canvas row (take RHS-CELLS rhs)))
 
-(defn rand-row [length]
-  (take length (repeatedly #(rand-nth [0 1]))))
+(defn rand-row []
+  [(repeatedly #(rand-nth [0 1])) (repeatedly #(rand-nth [0 1]))])
 
 (defn evolve-cell [rule [in1 in2 in3]]
   (if (= 0 (bit-and
@@ -61,7 +68,7 @@
 (defn draw-automata [rule row-zero]
   (doseq [[r s] (map vector
                      (range)
-                     (take 50 (iterate (partial evolve-seq rule) row-zero)))]
+                     (take V-CELLS (iterate (partial evolve-seq rule) row-zero)))]
     (draw-sequence (canvas) r s)))
 
 (defn get-checks []
@@ -80,7 +87,7 @@
 (defn draw-onclick []
   (draw-automata
    (apply decode-rule (map check-to-bit (get-checks)))
-   sequence))
+   (rand-row)))
 
 (set!
  (.-onclick (.getElementById js/document "draw"))
@@ -88,13 +95,13 @@
 
 (set!
  (.-onclick (.getElementById js/document "clear"))
- #(.clearRect (canvas) 0 0 300 300))
+ #(.clearRect (canvas) 0 0 CANVAS-SIZE CANVAS-SIZE))
 
 (defn draw-rules [start]
   (when (> start -1)
-    (.clearRect (canvas) 0 0 300 300)
+    (.clearRect (canvas) 0 0 CANVAS-SIZE CANVAS-SIZE)
     (set-checks start)
-    (draw-automata start sequence)
-    (js/setTimeout #(draw-rules (dec start)) 5000)))
+    (draw-automata start (rand-row))
+    (js/setTimeout #(draw-rules (dec start)) 3000)))
 
 (repl/connect "http://localhost:9000/repl")

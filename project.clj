@@ -3,5 +3,4 @@
   :dependencies [[org.clojure/clojure "1.4.0"]]
   :cljsbuild {:builds [{:source-path "cljs"
                         :compiler {:output-to "site/automata.js"
-                                   :optimizations :whitespace
                                    :pretty-print true}}]})
