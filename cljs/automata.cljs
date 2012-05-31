@@ -1,5 +1,7 @@
 (ns automata
-  (:require [clojure.browser.repl :as repl]))
+  (:require [clojure.browser.repl :as repl]
+            [goog.dom :as dom]
+            [goog.events :as ev]))
 
 (def CANVAS-SIZE 300)
 (def CELL-SIZE 5)
@@ -9,19 +11,18 @@
 (def LHS-CELLS (int (/ CANVAS-SIZE 12)))
 (def RHS-CELLS LHS-CELLS)
 
-(defn canvas []
-  (-> js/document
-      (.getElementById "canvas")
+(def CANVAS
+  (-> (dom/getElement "canvas")
       (.getContext "2d")))
 
 (defn black [c]
   (set! (.-fillStyle c) "rgb(0,0,0)"))
 
-(defn draw-cell [c [x y] fill]
+(defn draw-cell [[x y] fill]
   (let [xpos (+ (- (/ CANVAS-SIZE 2) CELL-INTERVAL) (* CELL-INTERVAL x))
         ypos (* CELL-INTERVAL y)]
     (when fill
-      (.fillRect c xpos ypos CELL-SIZE CELL-SIZE))))
+      (.fillRect CANVAS xpos ypos CELL-SIZE CELL-SIZE))))
 
 (def sequence [(repeat 0) (lazy-seq (cons 1 (repeat 0)))])
 
@@ -32,18 +33,18 @@
 (defn xcoords-rhs [cells]
   (range 0 (count cells)))
 
-(defn draw-lhs [canvas row lhs]
-  (doseq [cell (map (fn [x c] [canvas [x row] (= 1 c)]) (xcoords-lhs lhs) lhs)]
+(defn draw-lhs [row lhs]
+  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (xcoords-lhs lhs) lhs)]
     (apply draw-cell cell)))
 
-(defn draw-rhs [canvas row rhs]
-  (doseq [cell (map (fn [x c] [canvas [x row] (= 1 c)]) (xcoords-rhs rhs) rhs)]
+(defn draw-rhs [row rhs]
+  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (xcoords-rhs rhs) rhs)]
     (apply draw-cell cell)))
 
-(defn draw-sequence [canvas row [lhs rhs]]
-  (black canvas)
-  (draw-lhs canvas row (take LHS-CELLS lhs))
-  (draw-rhs canvas row (take RHS-CELLS rhs)))
+(defn draw-sequence [row [lhs rhs]]
+  (black CANVAS)
+  (draw-lhs row (take LHS-CELLS lhs))
+  (draw-rhs row (take RHS-CELLS rhs)))
 
 (defn rand-row []
   [(repeatedly #(rand-nth [0 1])) (repeatedly #(rand-nth [0 1]))])
@@ -69,37 +70,47 @@
   (doseq [[r s] (map vector
                      (range)
                      (take V-CELLS (iterate (partial evolve-seq rule) row-zero)))]
-    (draw-sequence (canvas) r s)))
+    (draw-sequence r s)))
 
 (defn get-checks []
-  (map #(.getElementById js/document (str "cb-" %)) (range 0 8)))
+  (map #(dom/getElement (str "cb-" %)) (range 0 8)))
 
 (defn set-checks [rule]
   (doseq [[c cb] (map #(vector (bit-and rule %1) %2) [128 64 32 16 8 4 2 1] (get-checks))]
     (set! (.-checked cb) (not (= 0 c)))))
 
-(defn decode-rule [& checks]
+(defn decode-rule [checks]
   (js/parseInt (apply str checks) 2))
 
 (defn check-to-bit [check]
   (if (.-checked check) 1 0))
 
+(defn checks-value []
+  (decode-rule (map check-to-bit (get-checks))))
+
 (defn draw-onclick []
-  (draw-automata
-   (apply decode-rule (map check-to-bit (get-checks)))
-   (rand-row)))
+  (draw-automata (checks-value) (rand-row)))
 
-(set!
- (.-onclick (.getElementById js/document "draw"))
- draw-onclick)
+(doseq [i (range 0 8)]
+  (ev/listen (dom/getElement (str "cb-" i))
+             ev/EventType.CLICK
+             #(set! (.-value (dom/getElement "rule-no")) (checks-value))))
 
-(set!
- (.-onclick (.getElementById js/document "clear"))
- #(.clearRect (canvas) 0 0 CANVAS-SIZE CANVAS-SIZE))
+(ev/listen (dom/getElement "draw")
+           ev/EventType.CLICK
+           draw-onclick)
+
+(ev/listen (dom/getElement "clear")
+           ev/EventType.CLICK
+           #(.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE))
+
+(ev/listen (dom/getElement "rule-no")
+           ev/EventType.KEYUP
+           #(set-checks (js/parseInt (.-value (dom/getElement "rule-no")))))
 
 (defn draw-rules [start]
   (when (> start -1)
-    (.clearRect (canvas) 0 0 CANVAS-SIZE CANVAS-SIZE)
+    (.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE)
     (set-checks start)
     (draw-automata start (rand-row))
     (js/setTimeout #(draw-rules (dec start)) 3000)))
