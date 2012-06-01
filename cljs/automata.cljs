@@ -91,22 +91,25 @@
 (defn draw-onclick []
   (draw-automata (checks-value) (rand-row)))
 
-(doseq [i (range 0 8)]
-  (ev/listen (dom/getElement (str "cb-" i))
+
+(let [rule-no (dom/getElement "rule-no")
+      draw (dom/getElement "draw")
+      clear (dom/getElement "clear")]
+
+  (doseq [i (range 0 8)]
+          (ev/listen (dom/getElement (str "cb-" i))
+                     ev/EventType.CLICK
+                     #(set! (.-value rule-no) (checks-value))))
+
+  (ev/listen draw ev/EventType.CLICK draw-onclick)
+
+  (ev/listen clear
              ev/EventType.CLICK
-             #(set! (.-value (dom/getElement "rule-no")) (checks-value))))
+             #(.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE))
 
-(ev/listen (dom/getElement "draw")
-           ev/EventType.CLICK
-           draw-onclick)
-
-(ev/listen (dom/getElement "clear")
-           ev/EventType.CLICK
-           #(.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE))
-
-(ev/listen (dom/getElement "rule-no")
-           ev/EventType.KEYUP
-           #(set-checks (js/parseInt (.-value (dom/getElement "rule-no")))))
+  (ev/listen rule-no
+             ev/EventType.KEYUP
+             #(set-checks (js/parseInt (.-value rule-no)))))
 
 (defn draw-rules [start]
   (when (> start -1)
@@ -116,3 +119,19 @@
     (js/setTimeout #(draw-rules (dec start)) 3000)))
 
 (repl/connect "http://localhost:9000/repl")
+
+;; This file is part of Andrew's Automata.
+
+;; Andrew's Automata is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; Andrew's Automata is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with Andrew's Automata. If not, see <http://www.gnu.org/licenses/>.
+
