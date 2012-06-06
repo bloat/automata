@@ -3,6 +3,8 @@
             [goog.dom :as dom]
             [goog.events :as ev]))
 
+(repl/connect "http://localhost:9000/repl")
+
 ;; TODO retreive canvas size from the document
 (def CANVAS-SIZE "The width and height of the canvas." 300)
 
@@ -21,6 +23,11 @@
 (def CANVAS "The graphics element from the canvas."
   (-> (dom/getElement "canvas")
       (.getContext "2d")))
+
+(def ALL-INPUTS "A vector of possible inputs for a cell."
+  [[1 1 1] [1 1 0] [1 0 1] [1 0 0] [0 1 1] [0 1 0] [0 0 1] [0 0 0]])
+
+(def POWERS "Bit values for 8 bits, used to convert integer rule numbers." [128 64 32 16 8 4 2 1])
 
 (defn black 
   "Sets the color of the canvas"
@@ -115,12 +122,8 @@ two (possibly infinite) sequences of cells."
 
 (defn evolve-cell
   "Take a rule number and three input cells, and produces the value for the outptut cell."
-  [rule [in1 in2 in3]]
-  (if (= 0 (bit-and
-            rule
-            (Math/pow 2 (js/parseInt (str in1 in2 in3) 2))))
-    0
-    1))
+  [rule input]
+  (rule input))
 
 (defn evolve-lhs [rule lhs rhs]
   (map (comp (partial evolve-cell rule) reverse) (partition 3 1 (cons (first rhs) lhs))))
@@ -142,7 +145,7 @@ two (possibly infinite) sequences of cells."
   (map #(dom/getElement (str "cb-" %)) (range 0 8)))
 
 (defn set-checks [rule]
-  (doseq [[c cb] (map #(vector (bit-and rule %1) %2) [128 64 32 16 8 4 2 1] (get-checks))]
+  (doseq [[c cb] (map #(vector (bit-and rule %1) %2) POWERS (get-checks))]
     (set! (.-checked cb) (not (= 0 c)))))
 
 (defn decode-rule [checks]
@@ -154,8 +157,11 @@ two (possibly infinite) sequences of cells."
 (defn checks-value []
   (decode-rule (map check-to-bit (get-checks))))
 
+(defn checks-to-rule [checks]
+  (zipmap ALL-INPUTS (map check-to-bit checks)))
+
 (defn draw-onclick []
-  (draw-automata (checks-value) @start-row))
+  (draw-automata (checks-to-rule (get-checks)) @start-row))
 
 (defn get-row [row-type]
   (if (row-types row-type)
@@ -180,8 +186,8 @@ two (possibly infinite) sequences of cells."
 
   (ev/listen clear
              ev/EventType.CLICK
-             (do (clear-canvas)
-                 (draw-first-row)))
+             #(do (clear-canvas)
+                  (draw-first-row)))
 
   (ev/listen rule-no
              ev/EventType.KEYUP
@@ -199,8 +205,6 @@ two (possibly infinite) sequences of cells."
     (set-checks start)
     (draw-automata start (rand-row))
     (js/setTimeout #(draw-rules (dec start)) 3000)))
-
-(repl/connect "http://localhost:9000/repl")
 
 ;; This file is part of Andrew's Automata.
 
