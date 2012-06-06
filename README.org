@@ -2,7 +2,7 @@
 
 Andrew's Automata is a toy app for learning Clojure Script and web programming.
 
-I wrote it too help teach myself these things.
+I wrote it to help teach myself these things.
 
 * License
 
