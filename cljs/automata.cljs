@@ -98,19 +98,24 @@ right hand side of the automata."
   [cells]
   (range 0 (count cells)))
 
+(defn draw-half
+  "Given a row number, and a finite sequence of cells, draws the cells on one half of the automata.
+Also requires a function to produce the cell x-coordinates."
+  [row half coord-fn]
+  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (coord-fn half) half)]
+    (apply draw-cell cell)))
+
 (defn draw-lhs
   "Given a row number, and a finite sequence of cells, draws the cells on the
 left hand side of the automata."
   [row lhs]
-  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (xcoords-lhs lhs) lhs)]
-    (apply draw-cell cell)))
+  (draw-half row lhs xcoords-lhs))
 
 (defn draw-rhs
   "Given a row number, and a finite sequence of cells, draws the cells on the
 right hand side of the automata."
   [row rhs]
-  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (xcoords-rhs rhs) rhs)]
-    (apply draw-cell cell)))
+  (draw-half row rhs xcoords-rhs))
 
 (defn draw-sequence
   "Draws the given row on the canvas, where a row is represented by
@@ -121,57 +126,90 @@ two (possibly infinite) sequences of cells."
   (draw-rhs row (take RHS-CELLS rhs)))
 
 (defn evolve-cell
-  "Take a rule number and three input cells, and produces the value for the outptut cell."
+  "Takes a rule and three input cells, and produces the value for the outptut cell.
+A rule is represented by a map from all possible inputs to the output."
   [rule input]
   (rule input))
 
-(defn evolve-lhs [rule lhs rhs]
+(defn evolve-lhs
+  "Computes one evolution of the left hand side of the automata."
+  [rule lhs rhs]
   (map (comp (partial evolve-cell rule) reverse) (partition 3 1 (cons (first rhs) lhs))))
 
-(defn evolve-rhs [rule lhs rhs]
+(defn evolve-rhs
+  "Computes one evolution of the right hand side of the automata."
+  [rule lhs rhs]
   (map (partial evolve-cell rule) (partition 3 1 (cons (first lhs) rhs))))
 
-(defn evolve-seq [rule [lhs rhs]]
+(defn evolve-seq
+  "Computes one evolution of the automata."
+  [rule [lhs rhs]]
   [(evolve-lhs rule lhs rhs)
    (evolve-rhs rule lhs rhs)])
 
-(defn draw-automata [rule row-zero]
+(defn draw-automata
+  "Draws multiple rows of the automata starting with the given start row, evolving using the given rule."
+  [rule row-zero]
   (doseq [[r s] (map vector
                      (range)
                      (take V-CELLS (iterate (partial evolve-seq rule) row-zero)))]
     (draw-sequence r s)))
 
-(defn get-checks []
+(defn get-checks
+  "Gets all the dom elements for the checkboxes on the page."
+  []
   (map #(dom/getElement (str "cb-" %)) (range 0 8)))
 
-(defn set-checks [rule]
+(defn set-checks
+  "Called when the user enters a rule number. Parses the number into
+the correct configuration of check boxes to represent the rule."
+  [rule]
   (doseq [[c cb] (map #(vector (bit-and rule %1) %2) POWERS (get-checks))]
     (set! (.-checked cb) (not (= 0 c)))))
 
-(defn decode-rule [checks]
+(defn decode-rule
+  "Creates a rule number from the given set of check boxes."
+  [checks]
   (js/parseInt (apply str checks) 2))
 
-(defn check-to-bit [check]
+(defn check-to-bit
+  "Returns 1 if the check box is checked, 0 otherwise."
+  [check]
   (if (.-checked check) 1 0))
 
-(defn checks-value []
+(defn checks-value
+  "Returns a rule number decoded from the current state of the check boxes on the page."
+  []
   (decode-rule (map check-to-bit (get-checks))))
 
-(defn checks-to-rule [checks]
+(defn checks-to-rule
+  "Returns a rule represented as a map from inputs to outputs."
+  [checks]
   (zipmap ALL-INPUTS (map check-to-bit checks)))
 
-(defn draw-onclick []
+(defn draw-onclick
+  "Called when the user presses the draw button. Draws the automata on the canvas."
+  []
   (draw-automata (checks-to-rule (get-checks)) @start-row))
 
-(defn get-row [row-type]
+(defn get-row
+  "Returns a row based on the given row type string."
+  [row-type]
   (if (row-types row-type)
     ((row-types row-type))
     (white-row)))
 
 (defn draw-first-row []
+  "Clears the canvas and draws the first row."
   (clear-canvas)
   (draw-sequence 0 @start-row))
 
+;; Set all the event handlers for the controls on the page.
+;; <br/><b>rule-no</b> is a text field where the user can enter a rule number.
+;; <br/><b>draw</b> is a button which draws the automata on the canvas.
+;; <br/><b>clear</b> is a button which blanks the canvas, and redraws the first row.
+;; <br/><b>start</b> is a text field where the user can enter the type of start row.
+;; <br/><b>cb<1-8></b> are checkboxes for picking the output for individual inputs.
 (let [rule-no (dom/getElement "rule-no")
       draw (dom/getElement "draw")
       clear (dom/getElement "clear")
