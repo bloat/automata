@@ -3154,12 +3154,12 @@ the correct configuration of check boxes to represent the rule.</p>
   (decode-rule (map check-to-bit (get-checks))))</pre></td></tr><tr><td class="docs"><p>Returns a rule represented as a map from inputs to outputs.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn checks-to-rule
   [checks]
-  (zipmap ALL-INPUTS (map check-to-bit checks)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn draw-onclick []
-  &quot;Called when the user presses the draw button. Draws the automata on the canvas.&quot;
-  (draw-automata (checks-to-rule (get-checks)) @start-row))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn get-row [row-type]
-  &quot;Returns a row based on the given row type string.&quot;
+  (zipmap ALL-INPUTS (map check-to-bit checks)))</pre></td></tr><tr><td class="docs"><p>Called when the user presses the draw button. Draws the automata on the canvas.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn draw-onclick
+  []
+  (draw-automata (checks-to-rule (get-checks)) @start-row))</pre></td></tr><tr><td class="docs"><p>Returns a row based on the given row type string.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-row
+  [row-type]
   (if (row-types row-type)
     ((row-types row-type))
     (white-row)))</pre></td></tr><tr><td class="docs">
