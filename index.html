@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8" content="text/html" http-equiv="Content-Type" /><meta name="description" /><style type="text/css">/**
+<html><head><meta charset="utf-8" content="text/html" http-equiv="Content-Type" /><meta content="A project to learn ClojureScript" name="description" /><style type="text/css">/**
  * SyntaxHighlighter
  * http://alexgorbatchev.com/SyntaxHighlighter
  *
@@ -3028,93 +3028,150 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>automata -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">automata</h1><h2 class="project-version">1.0-SNAPSHOT</h2><br />
+</script><title>Andrew's Automata -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">Andrew's Automata</h1><h2 class="project-version">1.0-SNAPSHOT</h2><br /><p>A project to learn ClojureScript</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#automata">automata</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#automata" name="automata"><h1 class="project-name">automata</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns automata
   (:require [clojure.browser.repl :as repl]
             [goog.dom :as dom]
             [goog.events :as ev]))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def CANVAS-SIZE 300)
-(def CELL-SIZE 5)
-(def CELL-GAP 1)
-(def CELL-INTERVAL (+ CELL-SIZE CELL-GAP))
-(def V-CELLS (int (/ CANVAS-SIZE 6)))
-(def LHS-CELLS (int (/ CANVAS-SIZE 12)))
-(def RHS-CELLS LHS-CELLS)</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def CANVAS
+</td><td class="codes"><pre class="brush: clojure">(repl/connect &quot;http://localhost:9000/repl&quot;)</pre></td></tr><tr><td class="docs"><p>The width and height of the canvas.</p>
+
+<p>TODO retreive canvas size from the document</p>
+</td><td class="codes"><pre class="brush: clojure">(def CANVAS-SIZE  300)</pre></td></tr><tr><td class="docs"><p>The size of each cell in pixels.</p>
+</td><td class="codes"><pre class="brush: clojure">(def CELL-SIZE  5)</pre></td></tr><tr><td class="docs"><p>The size of the gap between cells, in pixels.</p>
+</td><td class="codes"><pre class="brush: clojure">(def CELL-GAP  1)</pre></td></tr><tr><td class="docs"><p>The gap between the start of one cell, and the start of the next.</p>
+</td><td class="codes"><pre class="brush: clojure">(def CELL-INTERVAL  (+ CELL-SIZE CELL-GAP))</pre></td></tr><tr><td class="docs"><p>The number of cells in a column on the canvas.</p>
+</td><td class="codes"><pre class="brush: clojure">(def V-CELLS  (int (/ CANVAS-SIZE 6)))</pre></td></tr><tr><td class="docs"><p>The number of cells on the left hand side of a row on the canvas.</p>
+</td><td class="codes"><pre class="brush: clojure">(def LHS-CELLS  (int (/ CANVAS-SIZE 12)))</pre></td></tr><tr><td class="docs"><p>The number of cells on the left hand side of a row on the canvas.</p>
+</td><td class="codes"><pre class="brush: clojure">(def RHS-CELLS  LHS-CELLS)</pre></td></tr><tr><td class="docs"><p>The graphics element from the canvas.</p>
+</td><td class="codes"><pre class="brush: clojure">(def CANVAS 
   (-&gt; (dom/getElement &quot;canvas&quot;)
-      (.getContext &quot;2d&quot;)))</pre></td></tr><tr><td class="docs"><p>Sets the color of the canvas</p>
+      (.getContext &quot;2d&quot;)))</pre></td></tr><tr><td class="docs"><p>A vector of possible inputs for a cell.</p>
+</td><td class="codes"><pre class="brush: clojure">(def ALL-INPUTS 
+  [[1 1 1] [1 1 0] [1 0 1] [1 0 0] [0 1 1] [0 1 0] [0 0 1] [0 0 0]])</pre></td></tr><tr><td class="docs"><p>Bit values for 8 bits, used to convert integer rule numbers.</p>
+</td><td class="codes"><pre class="brush: clojure">(def POWERS  [128 64 32 16 8 4 2 1])</pre></td></tr><tr><td class="docs"><p>Sets the color of the canvas</p>
 </td><td class="codes"><pre class="brush: clojure">(defn black 
   [c]
-  (set! (.-fillStyle c) &quot;rgb(0,0,0)&quot;))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn draw-cell [[x y] fill]
-  (let [xpos (+ (- (/ CANVAS-SIZE 2) CELL-INTERVAL) (* CELL-INTERVAL x))
-        ypos (* CELL-INTERVAL y)]
-    (when fill
-      (.fillRect CANVAS xpos ypos CELL-SIZE CELL-SIZE))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn clear-canvas [] (.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn middle-cell [] [(repeat 0) (lazy-seq (cons 1 (repeat 0)))])
-(defn white-row [] [(repeat 0) (repeat 0)])
-(defn black-row [] [(repeat 1) (repeat 1)])
-(defn rand-row [] [(repeatedly #(rand-nth [0 1])) (repeatedly #(rand-nth [0 1]))])</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def row-types {&quot;middle-cell&quot; middle-cell
-                &quot;white-row&quot; white-row
-                &quot;black-row&quot; black-row
-                &quot;rand-row&quot; rand-row})</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(def start-row (atom (middle-cell)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn xcoords-lhs [cells]
+  (set! (.-fillStyle c) &quot;rgb(0,0,0)&quot;))</pre></td></tr><tr><td class="docs"><p>When fill is true, draws a single cell on the canvas, otherwise leaves it blank.
+The input coordinates are given in terms of cells, and converted here into pixel coordinates.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn draw-cell
+  [[x y] fill]
+  (when fill
+    (let [xpos (+ (- (/ CANVAS-SIZE 2) CELL-INTERVAL) (* CELL-INTERVAL x))
+          ypos (* CELL-INTERVAL y)]
+      (.fillRect CANVAS xpos ypos CELL-SIZE CELL-SIZE))))</pre></td></tr><tr><td class="docs"><p>Clears the entire canvas.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn clear-canvas
+  []
+  (.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE))</pre></td></tr><tr><td class="docs"><p>A row in the automata is represented by a vector of two infinite sequences.
+The first sequence is the cells from the center out to the left, and the
+second is the cells from the center out to the right.
+A 0 indicates a non-live (white) cell, and a 1 indicates a live (black cell).</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns a row with one cell live in the center.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn middle-cell
+  []
+  [(repeat 0) (lazy-seq (cons 1 (repeat 0)))])</pre></td></tr><tr><td class="docs"><p>Returns a row with no cells live.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn white-row
+  []
+  [(repeat 0) (repeat 0)])</pre></td></tr><tr><td class="docs"><p>Returns a row with all cells live.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn black-row
+  []
+  [(repeat 1) (repeat 1)])</pre></td></tr><tr><td class="docs"><p>Returns a random row.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn rand-row
+  []
+  [(repeatedly #(rand-nth [0 1])) (repeatedly #(rand-nth [0 1]))])</pre></td></tr><tr><td class="docs"><p>A map from the names of the row types (as entered by the user)
+to the actual row type functions.</p>
+</td><td class="codes"><pre class="brush: clojure">(def row-types
+  {&quot;middle-cell&quot; middle-cell
+   &quot;white-row&quot; white-row
+   &quot;black-row&quot; black-row
+   &quot;rand-row&quot; rand-row})</pre></td></tr><tr><td class="docs"><p>Holds the current starting row, set whenever the user selects a new row type.</p>
+</td><td class="codes"><pre class="brush: clojure">(def start-row
+  (atom (middle-cell)))</pre></td></tr><tr><td class="docs"><p>Returns the cell x-coordinates for a finite sequence of cells on the
+left hand side of the automata.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn xcoords-lhs
+  [cells]
   (let [end (- (inc (count cells)))]
-    (range -1 end -1)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn xcoords-rhs [cells]
-  (range 0 (count cells)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn draw-lhs [row lhs]
-  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (xcoords-lhs lhs) lhs)]
-    (apply draw-cell cell)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn draw-rhs [row rhs]
-  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (xcoords-rhs rhs) rhs)]
-    (apply draw-cell cell)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn draw-sequence [row [lhs rhs]]
+    (range -1 end -1)))</pre></td></tr><tr><td class="docs"><p>Returns the cell x-coordinates for a finite sequence of cells on the
+right hand side of the automata.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn xcoords-rhs
+  [cells]
+  (range 0 (count cells)))</pre></td></tr><tr><td class="docs"><p>Given a row number, and a finite sequence of cells, draws the cells on one half of the automata.
+Also requires a function to produce the cell x-coordinates.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn draw-half
+  [row half coord-fn]
+  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (coord-fn half) half)]
+    (apply draw-cell cell)))</pre></td></tr><tr><td class="docs"><p>Given a row number, and a finite sequence of cells, draws the cells on the
+left hand side of the automata.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn draw-lhs
+  [row lhs]
+  (draw-half row lhs xcoords-lhs))</pre></td></tr><tr><td class="docs"><p>Given a row number, and a finite sequence of cells, draws the cells on the
+right hand side of the automata.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn draw-rhs
+  [row rhs]
+  (draw-half row rhs xcoords-rhs))</pre></td></tr><tr><td class="docs"><p>Draws the given row on the canvas, where a row is represented by
+two (possibly infinite) sequences of cells.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn draw-sequence
+  [row [lhs rhs]]
   (black CANVAS)
   (draw-lhs row (take LHS-CELLS lhs))
-  (draw-rhs row (take RHS-CELLS rhs)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn evolve-cell [rule [in1 in2 in3]]
-  (if (= 0 (bit-and
-            rule
-            (Math/pow 2 (js/parseInt (str in1 in2 in3) 2))))
-    0
-    1))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn evolve-lhs [rule lhs rhs]
-  (map (comp (partial evolve-cell rule) reverse) (partition 3 1 (cons (first rhs) lhs))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn evolve-rhs [rule lhs rhs]
-  (map (partial evolve-cell rule) (partition 3 1 (cons (first lhs) rhs))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn evolve-seq [rule [lhs rhs]]
+  (draw-rhs row (take RHS-CELLS rhs)))</pre></td></tr><tr><td class="docs"><p>Takes a rule and three input cells, and produces the value for the outptut cell.
+A rule is represented by a map from all possible inputs to the output.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn evolve-cell
+  [rule input]
+  (rule input))</pre></td></tr><tr><td class="docs"><p>Computes one evolution of the left hand side of the automata.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn evolve-lhs
+  [rule lhs rhs]
+  (map (comp (partial evolve-cell rule) reverse) (partition 3 1 (cons (first rhs) lhs))))</pre></td></tr><tr><td class="docs"><p>Computes one evolution of the right hand side of the automata.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn evolve-rhs
+  [rule lhs rhs]
+  (map (partial evolve-cell rule) (partition 3 1 (cons (first lhs) rhs))))</pre></td></tr><tr><td class="docs"><p>Computes one evolution of the automata.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn evolve-seq
+  [rule [lhs rhs]]
   [(evolve-lhs rule lhs rhs)
-   (evolve-rhs rule lhs rhs)])</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn draw-automata [rule row-zero]
+   (evolve-rhs rule lhs rhs)])</pre></td></tr><tr><td class="docs"><p>Draws multiple rows of the automata starting with the given start row, evolving using the given rule.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn draw-automata
+  [rule row-zero]
   (doseq [[r s] (map vector
                      (range)
                      (take V-CELLS (iterate (partial evolve-seq rule) row-zero)))]
-    (draw-sequence r s)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn get-checks []
-  (map #(dom/getElement (str &quot;cb-&quot; %)) (range 0 8)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn set-checks [rule]
-  (doseq [[c cb] (map #(vector (bit-and rule %1) %2) [128 64 32 16 8 4 2 1] (get-checks))]
-    (set! (.-checked cb) (not (= 0 c)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn decode-rule [checks]
-  (js/parseInt (apply str checks) 2))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn check-to-bit [check]
-  (if (.-checked check) 1 0))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn checks-value []
-  (decode-rule (map check-to-bit (get-checks))))</pre></td></tr><tr><td class="docs">
+    (draw-sequence r s)))</pre></td></tr><tr><td class="docs"><p>Gets all the dom elements for the checkboxes on the page.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-checks
+  []
+  (map #(dom/getElement (str &quot;cb-&quot; %)) (range 0 8)))</pre></td></tr><tr><td class="docs"><p>Called when the user enters a rule number. Parses the number into
+the correct configuration of check boxes to represent the rule.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn set-checks
+  [rule]
+  (doseq [[c cb] (map #(vector (bit-and rule %1) %2) POWERS (get-checks))]
+    (set! (.-checked cb) (not (= 0 c)))))</pre></td></tr><tr><td class="docs"><p>Creates a rule number from the given set of check boxes.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn decode-rule
+  [checks]
+  (js/parseInt (apply str checks) 2))</pre></td></tr><tr><td class="docs"><p>Returns 1 if the check box is checked, 0 otherwise.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn check-to-bit
+  [check]
+  (if (.-checked check) 1 0))</pre></td></tr><tr><td class="docs"><p>Returns a rule number decoded from the current state of the check boxes on the page.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn checks-value
+  []
+  (decode-rule (map check-to-bit (get-checks))))</pre></td></tr><tr><td class="docs"><p>Returns a rule represented as a map from inputs to outputs.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn checks-to-rule
+  [checks]
+  (zipmap ALL-INPUTS (map check-to-bit checks)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn draw-onclick []
-  (draw-automata (checks-value) @start-row))</pre></td></tr><tr><td class="docs">
+  &quot;Called when the user presses the draw button. Draws the automata on the canvas.&quot;
+  (draw-automata (checks-to-rule (get-checks)) @start-row))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn get-row [row-type]
+  &quot;Returns a row based on the given row type string.&quot;
   (if (row-types row-type)
     ((row-types row-type))
     (white-row)))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn draw-first-row []
+  &quot;Clears the canvas and draws the first row.&quot;
   (clear-canvas)
-  (draw-sequence 0 @start-row))</pre></td></tr><tr><td class="docs">
+  (draw-sequence 0 @start-row))</pre></td></tr><tr><td class="docs"><p>Set all the event handlers for the controls on the page.
+<br/><b>rule-no</b> is a text field where the user can enter a rule number.
+<br/><b>draw</b> is a button which draws the automata on the canvas.
+<br/><b>clear</b> is a button which blanks the canvas, and redraws the first row.
+<br/><b>start</b> is a text field where the user can enter the type of start row.
+<br/><b>cb&lt;1-8></b> are checkboxes for picking the output for individual inputs.</p>
 </td><td class="codes"><pre class="brush: clojure">(let [rule-no (dom/getElement &quot;rule-no&quot;)
       draw (dom/getElement &quot;draw&quot;)
       clear (dom/getElement &quot;clear&quot;)
@@ -3129,8 +3186,8 @@ net.brehaut.ClojureTools = (function (SH) {
 
   (ev/listen clear
              ev/EventType.CLICK
-             (do (clear-canvas)
-                 (draw-first-row)))
+             #(do (clear-canvas)
+                  (draw-first-row)))
 
   (ev/listen rule-no
              ev/EventType.KEYUP
@@ -3146,8 +3203,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE)
     (set-checks start)
     (draw-automata start (rand-row))
-    (js/setTimeout #(draw-rules (dec start)) 3000)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(repl/connect &quot;http://localhost:9000/repl&quot;)</pre></td></tr><tr><td class="docs"><p>This file is part of Andrew's Automata.</p>
+    (js/setTimeout #(draw-rules (dec start)) 3000)))</pre></td></tr><tr><td class="docs"><p>This file is part of Andrew's Automata.</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>Andrew's Automata is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
