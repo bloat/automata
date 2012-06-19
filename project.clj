@@ -1,7 +1,7 @@
 (defproject automata "1.0-SNAPSHOT"
-  :plugins [[lein-cljsbuild "0.1.9"]]
+  :plugins [[lein-cljsbuild "0.2.1"]]
   :dependencies [[org.clojure/clojure "1.4.0"]]
-  :cljsbuild {:builds [{:source-path "cljs"
+  :cljsbuild {:builds [{:source-path "gen"
                         :compiler {:output-to "site/automata.js"
                                    :pretty-print true}}]})
 

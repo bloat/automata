@@ -1,0 +1,433 @@
+#+PROPERTY: results silent
+#+PROPERTY: tangle ../gen/automata-tangle.cljs
+
+* Rationale
+I started this small project in order to learn [[https://github.com/clojure/clojurescript][ClojureScript]]. When
+learning Clojure I was very familiar with programming in Java. But I
+haven't done any web programming for around 8 or 9 years, back in the
+days for EJB and JSP, so my JavaScript knowledge is very minimal, so I
+had new sympathy for people coming to Clojure with only minimal
+experience of Java and the JVM.
+
+Later on I found [[http://kimavcrp.blogspot.co.uk/2012/05/literate-programming-in-clojure-table.html][blog post]] about using [[http://orgmode.org/worg/org-contrib/babel/][Babel]] within [[http://orgmode.org/][Org]]. So I am now
+documenting this little program using Org. I don't think that the
+elisp code in that post is quite correct, but that is another
+subject. I am using the default set up for Babel and Clojure without
+writing any custom elisp for evaluation. This means that I am tied to
+Slime for Clojure, which of course makes things tricky for
+ClojureScript as there is no Swank server for Javascript
+yet. ClojureScript works best with lein and the [[https://github.com/emezeske/lein-cljsbuild][cljsbuild]] plugin,
+which provides various REPLs. These can be used from the Emacs
+inferior-lisp mode but strangely, there is no Babel plugin for
+inferior-lisp, only for various Slime flavours. 
+
+It wasn't too hard to [[http://github.com/bloat/babel-inferior-lisp][build]] something that did the job.
+
+So, this project is two things. A way for me to learn ClojureScript,
+and an experiment is using Org and Marginalia to document the code.
+* The Code
+** Preamble
+First we create a namesapce and import what we need. The repl library
+allows us to evaluate ClojureScript in a browser from a remote
+repl. The other two libraries are from Google Closure.
+
+#+begin_src clojurescript
+  (ns net.slothrop.automata
+    (:require [clojure.browser.repl :as repl]
+              [goog.dom :as dom]
+              [goog.events :as ev]))
+#+end_src
+
+When loaded into a browser this will connect back to a remote repl,
+and export the browsers evaluation capabilities.
+#+begin_src clojurescript :eval never
+  (repl/connect "http://localhost:9000/repl")
+#+end_src
+
+** Constants
+Now we define a bunch of constants for use in various
+functions. Mostly to control the size of various elements when drawn
+on the page.
+#+begin_src clojurescript
+  ;; TODO retreive canvas size from the document
+  (def CANVAS-SIZE "The width and height of the canvas." 300)
+  (def CELL-SIZE "The size of each cell in pixels." 5)
+  (def CELL-GAP "The size of the gap between cells, in pixels." 1)
+  (def CELL-INTERVAL "The gap between the start of one cell, and the start of the next." (+ CELL-SIZE CELL-GAP))
+#+end_src
+
+These constants control the number of cells that need to be calculated
+to fill the canvas.
+#+begin_src clojurescript
+  (def V-CELLS "The number of cells in a column on the canvas." (int (/ CANVAS-SIZE 6)))
+  (def LHS-CELLS "The number of cells on the left hand side of a row on the canvas." (int (/ CANVAS-SIZE 12)))
+  (def RHS-CELLS "The number of cells on the left hand side of a row on the canvas." LHS-CELLS)
+#+end_src
+
+Not strictly speaking the canvas, but all interaction with the canvas
+happens via its graphics context. This (and the drawing routines
+below) could be rewritten using generic graphics functions from
+Closure.
+#+begin_src clojurescript
+  (def CANVAS "The graphics element from the canvas."
+    (-> (dom/getElement "canvas")
+        (.getContext "2d")))
+#+end_src
+** Rules
+[[http://en.wikipedia.org/wiki/Cellular_automaton#Elementary_cellular_automata][1 dimensional cellular automata]] consist of a single infinite line of
+cells, and a rule for evolving the next generation. Each cell can be
+either on or off (black or white, alive or dead, etc.). The rule is
+defined by specifying an output for all possible inputs. For each
+cell, the inputs are itself and the two cells on either side, making a
+total of eight possible values for the three binary inputs. The inputs
+are enumerated below.
+#+begin_src clojurescript
+  (def ALL-INPUTS "A vector of possible inputs for the evolution of a cell."
+    [[1 1 1] [1 1 0] [1 0 1] [1 0 0] [0 1 1] [0 1 0] [0 0 1] [0 0 0]])
+#+end_src
+
+To convert from a rule number to a rule consider this. Each possible
+input for a cell results in the cell in the next generation being
+either alive or dead. If the cell lives then we give that input a
+one. If the cell dies we give that input a zero. This gives us 8 ones
+or zeros to make an 8 bit number, i.e. a rule number from 0 to 255.
+#+begin_src clojurescript
+  (defn decode-rule
+    "Creates a rule number from the given set of binary inputs."
+    [live-or-dead]
+    (js/parseInt (apply str live-or-dead) 2))
+  
+  (defn encode-rule
+    "Given a rule number, creates a sequence of live or dead values for
+    the next generation of cells."
+    [rule]
+    (map #(bit-and rule %) [128 64 32 16 8 4 2 1]))
+#+end_src
+** Drawing functions
+Next we have the functions that actually draw on the canvas.
+
+Two helpers to start with. The first sets the colour used for drawing
+the cells. The function is called 'black' for some obscure
+reason. Next is the function for erasing all cells from the canvas.
+#+begin_src clojurescript
+(defn black 
+  "Sets the color of the canvas"
+  []
+  (set! (.-fillStyle CANVAS) "rgb(0,0,0)"))
+
+(defn clear-canvas
+  "Clears the entire canvas."
+  []
+  (.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE))
+#+end_src
+
+This function draws a single square on the canvas representing a live
+cell. The coordinates x and y are given in terms of cells. The origin
+is at the top of the canvas in the middle. So cells on the left hand
+side have a negative x coordinate. This function is called for every
+cell, and the fill variable indicates whether the cell should actually
+be filled in, i.e. whether it is live or not.
+#+begin_src clojurescript
+(defn draw-cell
+  "When fill is true, draws a single cell on the canvas, otherwise leaves it blank.
+The input coordinates are given in terms of cells, and converted here into pixel coordinates."
+  [[x y] fill]
+  (when fill
+    (let [xpos (+ (- (/ CANVAS-SIZE 2) CELL-INTERVAL) (* CELL-INTERVAL x))
+          ypos (* CELL-INTERVAL y)]
+      (.fillRect CANVAS xpos ypos CELL-SIZE CELL-SIZE))))
+#+end_src
+
+** Working with cells
+Now we have dispensed with the paractical matter of actually drawing
+the automaton, we come to the abstract matter of calculating its
+evolution.
+
+First we have four functions to create different initial states for the automaton. 
+
+#+begin_src clojurescript
+;; A row in the automata is represented by a vector of two infinite sequences.
+;; The first sequence is the cells from the center out to the left, and the
+;; second is the cells from the center out to the right.
+;; A 0 indicates a non-live (white) cell, and a 1 indicates a live (black cell).
+
+(defn middle-cell
+  "Returns a row with one cell live in the center."
+  []
+  [(repeat 0) (lazy-seq (cons 1 (repeat 0)))])
+
+(defn white-row
+  "Returns a row with no cells live."
+  []
+  [(repeat 0) (repeat 0)])
+
+(defn black-row
+  "Returns a row with all cells live."
+  []
+  [(repeat 1) (repeat 1)])
+
+(defn rand-row
+  "Returns a random row."
+  []
+  [(repeatedly #(rand-nth [0 1])) (repeatedly #(rand-nth [0 1]))])
+#+end_src
+*** Evolving cells
+
+#+begin_src clojurescript
+(defn evolve-cell
+  "Takes a rule and three input cells, and produces the value for the outptut cell.
+A rule is represented by a map from all possible inputs to the output."
+  [rule input]
+  (rule input))
+#+end_src
+
+#+begin_src clojurescript
+(defn evolve-lhs
+  "Computes one evolution of the left hand side of the automata."
+  [rule lhs rhs]
+  (map (comp (partial evolve-cell rule) reverse) (partition 3 1 (cons (first rhs) lhs))))
+#+end_src
+
+#+begin_src clojurescript
+(defn evolve-rhs
+  "Computes one evolution of the right hand side of the automata."
+  [rule lhs rhs]
+  (map (partial evolve-cell rule) (partition 3 1 (cons (first lhs) rhs))))
+#+end_src
+
+#+begin_src clojurescript
+(defn evolve-seq
+  "Computes one evolution of the automata."
+  [rule [lhs rhs]]
+  [(evolve-lhs rule lhs rhs)
+   (evolve-rhs rule lhs rhs)])
+#+end_src
+
+*** Passing the cells to the drawing functions
+Once the cells have been calculated, they must be drawn. The drawing
+function above draws a single cell, and it requires cell coordinated,
+which it will then convert to coordinates on the canvas.
+
+These two functions return ranges of cell coordinates. For the left
+hand side these start at -1 and decrease. For the right hand side they
+start at 0 and increase.
+#+begin_src clojurescript
+(defn xcoords-lhs
+  "Returns the cell x-coordinates for a finite sequence of cells on the
+left hand side of the automata."
+  [cells]
+  (let [end (- (inc (count cells)))]
+    (range -1 end -1)))
+
+(defn xcoords-rhs
+  "Returns the cell x-coordinates for a finite sequence of cells on the
+right hand side of the automata."
+  [cells]
+  (range 0 (count cells)))
+#+end_src
+
+The next three functions are used to draw half a row of the automaton.
+#+begin_src clojurescript
+(defn draw-half
+  "Given a row number, and a finite sequence of cells, draws the cells on one half of the automata.
+Also requires a function to produce the cell x-coordinates."
+  [row half coord-fn]
+  (doseq [cell (map (fn [x c] [[x row] (= 1 c)]) (coord-fn half) half)]
+    (apply draw-cell cell)))
+
+(defn draw-lhs
+  "Given a row number, and a finite sequence of cells, draws the cells on the
+left hand side of the automata."
+  [row lhs]
+  (draw-half row lhs xcoords-lhs))
+
+(defn draw-rhs
+  "Given a row number, and a finite sequence of cells, draws the cells on the
+right hand side of the automata."
+  [row rhs]
+  (draw-half row rhs xcoords-rhs))
+#+end_src
+
+This function takes an infinite set of cells and realizes only those
+parts needed to fill the canvas.
+#+begin_src clojurescript
+(defn draw-sequence
+  "Draws the given row on the canvas, where a row is represented by
+two (possibly infinite) sequences of cells."
+  [row [lhs rhs]]
+  (draw-lhs row (take LHS-CELLS lhs))
+  (draw-rhs row (take RHS-CELLS rhs)))
+#+end_src
+
+This function iterates the evolution of the automaton, drawing each
+generation as a row on the canvas.
+#+begin_src clojurescript
+(defn draw-automata
+  "Draws multiple rows of the automata starting with the given start row, evolving using the given rule."
+  [rule row-zero]
+  (doseq [[r s] (map vector
+                     (range)
+                     (take V-CELLS (iterate (partial evolve-seq rule) row-zero)))]
+    (draw-sequence r s)))
+#+end_src
+** The UI
+The UI consists of a canvas, which containst the drawing of the
+evolution of the automaton. There are 8 elements to allow the user to
+select the rule graphically, and an input field to type a numeric rule
+number. The 8 elements and the numeric box are linked, so changing one
+will cause the corresponding change in the other. There is also an
+input field to select the initial configuration of the automaton,
+drawn as the first row at the top of the canvas.
+
+There are two buttons, to draw the automaton and to clear the canvas.
+
+We need to store the starting row. This is really for when the user
+elects to start with a random row. We immediately display the row, and
+then we must store it, so then when the user hits the draw button, the
+initial row doesn't get regenerated.
+#+begin_src clojurescript
+(def start-row
+  "Holds the current starting row, set whenever the user selects a new row type."
+  (atom (middle-cell)))
+#+end_src
+
+#+begin_src clojurescript
+(defn get-checks
+  "Gets all the dom elements for the checkboxes on the page."
+  []
+  (map #(dom/getElement (str "cb-" %)) (range 0 8)))
+#+end_src
+
+Each one of these inputs is given a value which is a
+power of two. These are also enumerated here and they are used to
+convert from a numeric rule specification into a map of possible
+inputs to outputs, and vice versa.
+#+begin_src clojurescript
+  (defn set-checks
+    "Called when the user enters a rule number. Parses the number into
+  the correct configuration of check boxes to represent the rule."
+    [rule]
+    (doseq [[c cb] (map vector (encode-rule rule) (get-checks))]
+      (set! (.-checked cb) (not (= 0 c)))))
+#+end_src
+
+
+#+begin_src clojurescript
+(defn check-to-bit
+  "Returns 1 if the check box is checked, 0 otherwise."
+  [check]
+  (if (.-checked check) 1 0))
+#+end_src
+
+#+begin_src clojurescript
+(defn checks-value
+  "Returns a rule number decoded from the current state of the check boxes on the page."
+  []
+  (decode-rule (map check-to-bit (get-checks))))
+#+end_src
+
+#+begin_src clojurescript
+  (defn checks-to-rule
+    "Returns a rule represented as a map from inputs to outputs."
+    [checks]
+    (zipmap ALL-INPUTS (map check-to-bit checks)))
+#+end_src
+
+#+begin_src clojurescript
+(defn draw-onclick
+  "Called when the user presses the draw button. Draws the automata on the canvas."
+  []
+  (draw-automata (checks-to-rule (get-checks)) @start-row))
+#+end_src
+
+This is used to generate the initial row. The function which does the
+worked is retrieved from the map of possible starting row types.
+#+begin_src clojurescript
+  (def row-types
+    "A map from the names of the row types (as entered by the user)
+  to the actual row type functions."
+    {"middle-cell" middle-cell
+     "white-row" white-row
+     "black-row" black-row
+     "rand-row" rand-row})
+  
+  
+  (defn get-row
+    "Returns a row based on the given row type string."
+    [row-type]
+    (if (row-types row-type)
+      ((row-types row-type))
+      (white-row)))
+#+end_src
+
+This function is called whenever the user changes the initial row
+type. The canvas is cleared and the new row is drawn at the top.
+#+begin_src clojurescript
+  (defn draw-first-row
+    "Clears the canvas and draws the first row."
+    []
+    (clear-canvas)
+    (black)
+    (draw-sequence 0 @start-row))
+#+end_src
+
+#+begin_src clojurescript
+;; Set all the event handlers for the controls on the page.
+;; <br/><b>rule-no</b> is a text field where the user can enter a rule number.
+;; <br/><b>draw</b> is a button which draws the automata on the canvas.
+;; <br/><b>clear</b> is a button which blanks the canvas, and redraws the first row.
+;; <br/><b>start</b> is a text field where the user can enter the type of start row.
+;; <br/><b>cb<1-8></b> are checkboxes for picking the output for individual inputs.
+(let [rule-no (dom/getElement "rule-no")
+      draw (dom/getElement "draw")
+      clear (dom/getElement "clear")
+      start (dom/getElement "start")]
+
+  (doseq [i (range 0 8)]
+          (ev/listen (dom/getElement (str "cb-" i))
+                     ev/EventType.CLICK
+                     #(set! (.-value rule-no) (checks-value))))
+
+  (ev/listen draw ev/EventType.CLICK draw-onclick)
+
+  (ev/listen clear
+             ev/EventType.CLICK
+             #(do (clear-canvas)
+                  (draw-first-row)))
+
+  (ev/listen rule-no
+             ev/EventType.KEYUP
+             #(set-checks (js/parseInt (.-value rule-no))))
+
+  (ev/listen start
+             ev/EventType.KEYUP
+             #(let [new-start-row (get-row (.-value start))]
+                (reset! start-row new-start-row)
+                (draw-first-row))))
+#+end_src
+
+#+begin_src clojurescript
+(defn draw-rules [start]
+  (when (> start -1)
+    (.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE)
+    (set-checks start)
+    (draw-automata start (rand-row))
+    (js/setTimeout #(draw-rules (dec start)) 3000)))
+#+end_src
+
+* LICENSE
+This file is part of Andrew's Automata.
+
+Andrew's Automata is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Andrew's Automata is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Andrew's Automata. If not, see <http://www.gnu.org/licenses/>.
+

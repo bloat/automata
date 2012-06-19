@@ -199,8 +199,9 @@ the correct configuration of check boxes to represent the rule."
     ((row-types row-type))
     (white-row)))
 
-(defn draw-first-row []
+(defn draw-first-row
   "Clears the canvas and draws the first row."
+  []
   (clear-canvas)
   (draw-sequence 0 @start-row))
 
