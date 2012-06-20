@@ -1,0 +1,743 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Andrew's Automata</title>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"/>
+<meta name="title" content="Andrew's Automata"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="June 2012"/>
+<meta name="author" content="Andrew Cowper"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  {margin-left:auto; margin-right:0px;  text-align:right;}
+  .left   {margin-left:0px;  margin-right:auto; text-align:left;}
+  .center {margin-left:auto; margin-right:auto; text-align:center;}
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top;  }
+  th.right  { text-align:center;  }
+  th.left   { text-align:center;   }
+  th.center { text-align:center; }
+  td.right  { text-align:right;  }
+  td.left   { text-align:left;   }
+  td.center { text-align:center; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  div.inlinetask {
+    padding:10px;
+    border:2px solid gray;
+    margin:10px;
+    background: #ffffcc;
+  }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" />
+<script type="text/javascript">
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+
+</head>
+<body>
+
+<div id="preamble">
+
+</div>
+
+<div id="content">
+<h1 class="title">Andrew's Automata</h1>
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">Rationale</a></li>
+<li><a href="#sec-2">The Code</a>
+<ul>
+<li><a href="#sec-2-1">Preamble</a></li>
+<li><a href="#sec-2-2">Constants</a></li>
+<li><a href="#sec-2-3">Rules</a></li>
+<li><a href="#sec-2-4">Drawing functions</a></li>
+<li><a href="#sec-2-5">Working with cells</a></li>
+<li><a href="#sec-2-6">The UI</a></li>
+</ul>
+</li>
+<li><a href="#sec-3">LICENSE</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1">Rationale</h2>
+<div class="outline-text-2" id="text-1">
+
+<p>I started this small project in order to learn <a href="https://github.com/clojure/clojurescript">ClojureScript</a>. When
+learning Clojure I was very familiar with programming in Java. But I
+haven't done any web programming for around 8 or 9 years, back in the
+days of EJB and JSP, so my JavaScript knowledge is very
+minimal. Therefore I have gained new sympathy for people coming to
+Clojure with only minimal experience of Java and the JVM.
+</p>
+<p>
+Later on I found <a href="http://kimavcrp.blogspot.co.uk/2012/05/literate-programming-in-clojure-table.html">blog post</a> about using <a href="http://orgmode.org/worg/org-contrib/babel/">Babel</a> within <a href="http://orgmode.org/">Org</a>. So I am now
+documenting this little program using Org. I don't think that the
+elisp code in that post is quite correct, but that is another
+subject. I am using the default set up for Babel and Clojure without
+writing any custom elisp for evaluation. This means that I am tied to
+Slime for Clojure, which of course makes things tricky for
+ClojureScript as there is no Swank server for Javascript
+yet. ClojureScript works best with lein and the <a href="https://github.com/emezeske/lein-cljsbuild">cljsbuild</a> plugin,
+which provides various REPLs. These can be used from the Emacs
+inferior-lisp mode but strangely, there is no Babel plugin for
+inferior-lisp, only for various Slime flavours. 
+</p>
+<p>
+It wasn't too hard to <a href="http://github.com/bloat/babel-inferior-lisp">build</a> something that did the job.
+</p>
+<p>
+So, this project is two things. A way for me to learn ClojureScript,
+and an experiment is using Org and Marginalia to document the code.
+</p></div>
+
+</div>
+
+<div id="outline-container-2" class="outline-2">
+<h2 id="sec-2">The Code</h2>
+<div class="outline-text-2" id="text-2">
+
+
+</div>
+
+<div id="outline-container-2-1" class="outline-3">
+<h3 id="sec-2-1">Preamble</h3>
+<div class="outline-text-3" id="text-2-1">
+
+<p>First we create a namesapce and import what we need. The repl library
+allows us to evaluate ClojureScript in a browser from a remote
+repl. The other two libraries are from Google Closure.
+</p>
+
+
+
+<pre class="src src-clojurescript">(<span style="color: #98fb98; font-weight: bold;">ns</span> net.slothrop.automata
+  (<span style="color: #7fffd4;">:require</span> [clojure.browser.repl <span style="color: #7fffd4;">:as</span> repl]
+            [goog.dom <span style="color: #7fffd4;">:as</span> dom]
+            [goog.events <span style="color: #7fffd4;">:as</span> ev]))
+</pre>
+
+
+<p>
+When loaded into a browser this will connect back to a remote repl,
+and export the browsers evaluation capabilities.
+</p>
+
+
+<pre class="src src-clojurescript">(repl/connect <span style="color: #cd8162;">"http://localhost:9000/repl"</span>)
+</pre>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-2-2" class="outline-3">
+<h3 id="sec-2-2">Constants</h3>
+<div class="outline-text-3" id="text-2-2">
+
+<p>Now we define a bunch of constants for use in various
+functions. Mostly to control the size of various elements when drawn
+on the page.
+</p>
+
+
+<pre class="src src-clojurescript"><span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">TODO retreive canvas size from the document</span>
+(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">CANVAS-SIZE</span> <span style="color: #cd8162;">"The width and height of the canvas."</span> 300)
+(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">CELL-SIZE</span> <span style="color: #cd8162;">"The size of each cell in pixels."</span> 5)
+(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">CELL-GAP</span> <span style="color: #cd8162;">"The size of the gap between cells, in pixels."</span> 1)
+(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">CELL-INTERVAL</span> <span style="color: #cd8162;">"The gap between the start of one cell, and the start of the next."</span> (<span style="color: #fff68f;">+</span> CELL-SIZE CELL-GAP))
+</pre>
+
+
+<p>
+These constants control the number of cells that need to be calculated
+to fill the canvas.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">V-CELLS</span> <span style="color: #cd8162;">"The number of cells in a column on the canvas."</span> (<span style="color: #fff68f;">int</span> (<span style="color: #fff68f;">/</span> CANVAS-SIZE 6)))
+(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">LHS-CELLS</span> <span style="color: #cd8162;">"The number of cells on the left hand side of a row on the canvas."</span> (<span style="color: #fff68f;">int</span> (<span style="color: #fff68f;">/</span> CANVAS-SIZE 12)))
+(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">RHS-CELLS</span> <span style="color: #cd8162;">"The number of cells on the left hand side of a row on the canvas."</span> LHS-CELLS)
+</pre>
+
+
+<p>
+Not strictly speaking the canvas, but all interaction with the canvas
+happens via its graphics context. This (and the drawing routines
+below) could be rewritten using generic graphics functions from
+Closure.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">CANVAS</span> <span style="color: #cd8162;">"The graphics element from the canvas."</span>
+  (<span style="color: #98fb98; font-weight: bold;">-&gt;</span> (dom/<span style="color: #6ca6cd;">getElement</span> <span style="color: #cd8162;">"canvas"</span>)
+      (<span style="color: #6ca6cd;">.getContext</span> <span style="color: #cd8162;">"2d"</span>)))
+</pre>
+
+</div>
+
+</div>
+
+<div id="outline-container-2-3" class="outline-3">
+<h3 id="sec-2-3">Rules</h3>
+<div class="outline-text-3" id="text-2-3">
+
+<p><a href="http://en.wikipedia.org/wiki/Cellular_automaton#Elementary_cellular_automata">1 dimensional cellular automata</a> consist of a single infinite line of
+cells, and a rule for evolving the next generation. Each cell can be
+either on or off (black or white, alive or dead, etc.). The rule is
+defined by specifying an output for all possible inputs. For each
+cell, the inputs are itself and the two cells on either side, making a
+total of eight possible values for the three binary inputs. The inputs
+are enumerated below.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">ALL-INPUTS</span> <span style="color: #cd8162;">"A vector of possible inputs for the evolution of a cell."</span>
+  [[1 1 1] [1 1 0] [1 0 1] [1 0 0] [0 1 1] [0 1 0] [0 0 1] [0 0 0]])
+</pre>
+
+
+<p>
+To convert from a rule number to a rule consider this. Each possible
+input for a cell results in the cell in the next generation being
+either alive or dead. If the cell lives then we give that input a
+one. If the cell dies we give that input a zero. This gives us 8 ones
+or zeros to make an 8 bit number, i.e. a rule number from 0 to 255.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">decode-rule</span>
+  <span style="color: #cd8162;">"Creates a rule number from the given set of binary inputs."</span>
+  [live-or-dead]
+  (js/<span style="color: #6ca6cd;">parseInt</span> (<span style="color: #fff68f;">apply</span> str live-or-dead) 2))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">encode-rule</span>
+  <span style="color: #cd8162;">"Given a rule number, creates a sequence of live or dead values for</span>
+<span style="color: #cd8162;">  the next generation of cells."</span>
+  [rule]
+  (<span style="color: #fff68f;">map</span> #(<span style="color: #fff68f;">bit-and</span> rule %) [128 64 32 16 8 4 2 1]))
+</pre>
+
+</div>
+
+</div>
+
+<div id="outline-container-2-4" class="outline-3">
+<h3 id="sec-2-4">Drawing functions</h3>
+<div class="outline-text-3" id="text-2-4">
+
+<p>Next we have the functions that actually draw on the canvas.
+</p>
+<p>
+Two helpers to start with. The first sets the colour used for drawing
+the cells. The function is called 'black' for some obscure
+reason. Next is the function for erasing all cells from the canvas.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">black</span> 
+  <span style="color: #cd8162;">"Sets the color of the canvas"</span>
+  []
+  (set! (<span style="color: #6ca6cd;">.-fillStyle</span> CANVAS) <span style="color: #cd8162;">"rgb(0,0,0)"</span>))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">clear-canvas</span>
+  <span style="color: #cd8162;">"Clears the entire canvas."</span>
+  []
+  (<span style="color: #6ca6cd;">.clearRect</span> CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE))
+</pre>
+
+
+<p>
+This function draws a single square on the canvas representing a live
+cell. The coordinates x and y are given in terms of cells. The origin
+is at the top of the canvas in the middle. So cells on the left hand
+side have a negative x coordinate. This function is called for every
+cell, and the fill variable indicates whether the cell should actually
+be filled in, i.e. whether it is live or not.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-cell</span>
+  <span style="color: #cd8162;">"When fill is true, draws a single cell on the canvas, otherwise leaves it blank.</span>
+<span style="color: #cd8162;">The input coordinates are given in terms of cells, and converted here into pixel coordinates."</span>
+  [[x y] fill]
+  (<span style="color: #98fb98; font-weight: bold;">when</span> fill
+    (<span style="color: #98fb98; font-weight: bold;">let</span> [xpos (<span style="color: #fff68f;">+</span> (<span style="color: #fff68f;">-</span> (<span style="color: #fff68f;">/</span> CANVAS-SIZE 2) CELL-INTERVAL) (<span style="color: #fff68f;">*</span> CELL-INTERVAL x))
+          ypos (<span style="color: #fff68f;">*</span> CELL-INTERVAL y)]
+      (<span style="color: #6ca6cd;">.fillRect</span> CANVAS xpos ypos CELL-SIZE CELL-SIZE))))
+</pre>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-2-5" class="outline-3">
+<h3 id="sec-2-5">Working with cells</h3>
+<div class="outline-text-3" id="text-2-5">
+
+<p>Now we have dispensed with the paractical matter of actually drawing
+the automaton, we come to the abstract matter of calculating its
+evolution.
+</p>
+<p>
+First we have four functions to create different initial states for the automaton. 
+</p>
+
+
+
+<pre class="src src-clojurescript"><span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">A row in the automata is represented by a vector of two infinite sequences.</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">The first sequence is the cells from the center out to the left, and the</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">second is the cells from the center out to the right.</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">A 0 indicates a non-live (white) cell, and a 1 indicates a live (black cell).</span>
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">middle-cell</span>
+  <span style="color: #cd8162;">"Returns a row with one cell live in the center."</span>
+  []
+  [(<span style="color: #fff68f;">repeat</span> 0) (<span style="color: #fff68f;">lazy-seq</span> (<span style="color: #fff68f;">cons</span> 1 (<span style="color: #fff68f;">repeat</span> 0)))])
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">white-row</span>
+  <span style="color: #cd8162;">"Returns a row with no cells live."</span>
+  []
+  [(<span style="color: #fff68f;">repeat</span> 0) (<span style="color: #fff68f;">repeat</span> 0)])
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">black-row</span>
+  <span style="color: #cd8162;">"Returns a row with all cells live."</span>
+  []
+  [(<span style="color: #fff68f;">repeat</span> 1) (<span style="color: #fff68f;">repeat</span> 1)])
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">rand-row</span>
+  <span style="color: #cd8162;">"Returns a random row."</span>
+  []
+  [(<span style="color: #fff68f;">repeatedly</span> #(rand-nth [0 1])) (<span style="color: #fff68f;">repeatedly</span> #(rand-nth [0 1]))])
+</pre>
+
+
+</div>
+
+<div id="outline-container-2-5-1" class="outline-4">
+<h4 id="sec-2-5-1">Evolving cells</h4>
+<div class="outline-text-4" id="text-2-5-1">
+
+
+<p>
+For these functions a rule is represented by a map, and so calculating
+the new state for the cell is a simple map lookup, using the three
+input values as the key.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">evolve-cell</span>
+  <span style="color: #cd8162;">"Takes a rule and three input cells, and produces the value for the outptut cell.</span>
+<span style="color: #cd8162;">A rule is represented by a map from all possible inputs to the output."</span>
+  [rule input]
+  (rule input))
+</pre>
+
+
+<p>
+We represent the current state of the automata as two sequences, and
+so we have two functions here. The first evolves the left hand side of
+the automaton. We use partition to split the sequence up into the sets
+of three inputs that each cell requires to determine its state for the
+next generation. Note that we have to peek at one item from the other
+side in order to have the inputs for the first cell on the left hand
+side. Note also the use of reverse, the left hand side runs from right
+to left, but the inputs in the rules are specified from left to right.
+</p>
+<p>
+The second function is a little simpler as it does not have to do the
+reverse. 
+</p>
+<p>
+In both of these functions we could replace "(partial evolve-cell
+rule)" with simply "rule". It used to be more complicated to do the
+calculation before I started using a map for the rule, and I've left
+it how it was as I think it is a little more explicit this way.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">evolve-lhs</span>
+  <span style="color: #cd8162;">"Computes one evolution of the left hand side of the automata."</span>
+  [rule lhs rhs]
+  (<span style="color: #fff68f;">map</span> (<span style="color: #fff68f;">comp</span> (<span style="color: #fff68f;">partial</span> evolve-cell rule) reverse) (<span style="color: #fff68f;">partition</span> 3 1 (<span style="color: #fff68f;">cons</span> (<span style="color: #fff68f;">first</span> rhs) lhs))))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">evolve-rhs</span>
+  <span style="color: #cd8162;">"Computes one evolution of the right hand side of the automata."</span>
+  [rule lhs rhs]
+  (<span style="color: #fff68f;">map</span> (<span style="color: #fff68f;">partial</span> evolve-cell rule) (<span style="color: #fff68f;">partition</span> 3 1 (<span style="color: #fff68f;">cons</span> (<span style="color: #fff68f;">first</span> lhs) rhs))))
+</pre>
+
+
+<p>
+This function simply produces a new complete state for the automaton
+by seperately evolving the old state's two halves.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">evolve-seq</span>
+  <span style="color: #cd8162;">"Computes one evolution of the automata."</span>
+  [rule [lhs rhs]]
+  [(evolve-lhs rule lhs rhs)
+   (evolve-rhs rule lhs rhs)])
+</pre>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-2-5-2" class="outline-4">
+<h4 id="sec-2-5-2">Passing the cells to the drawing functions</h4>
+<div class="outline-text-4" id="text-2-5-2">
+
+<p>Once the cells have been calculated, they must be drawn. The drawing
+function above draws a single cell, and it requires cell coordinated,
+which it will then convert to coordinates on the canvas.
+</p>
+<p>
+These two functions return ranges of cell coordinates. For the left
+hand side these start at -1 and decrease. For the right hand side they
+start at 0 and increase.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">xcoords-lhs</span>
+  <span style="color: #cd8162;">"Returns the cell x-coordinates for a finite sequence of cells on the</span>
+<span style="color: #cd8162;">left hand side of the automata."</span>
+  [cells]
+  (<span style="color: #98fb98; font-weight: bold;">let</span> [end (<span style="color: #fff68f;">-</span> (<span style="color: #fff68f;">inc</span> (<span style="color: #fff68f;">count</span> cells)))]
+    (<span style="color: #fff68f;">range</span> -1 end -1)))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">xcoords-rhs</span>
+  <span style="color: #cd8162;">"Returns the cell x-coordinates for a finite sequence of cells on the</span>
+<span style="color: #cd8162;">right hand side of the automata."</span>
+  [cells]
+  (<span style="color: #fff68f;">range</span> 0 (<span style="color: #fff68f;">count</span> cells)))
+</pre>
+
+
+<p>
+The next three functions are used to draw half a row of the automaton.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-half</span>
+  <span style="color: #cd8162;">"Given a row number, and a finite sequence of cells, draws the cells on one half of the automata.</span>
+<span style="color: #cd8162;">Also requires a function to produce the cell x-coordinates."</span>
+  [row half coord-fn]
+  (<span style="color: #98fb98; font-weight: bold;">doseq</span> [cell (<span style="color: #fff68f;">map</span> (<span style="color: #00ffff;">fn</span> [x c] [[x row] (<span style="color: #fff68f;">=</span> 1 c)]) (coord-fn half) half)]
+    (<span style="color: #fff68f;">apply</span> draw-cell cell)))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-lhs</span>
+  <span style="color: #cd8162;">"Given a row number, and a finite sequence of cells, draws the cells on the</span>
+<span style="color: #cd8162;">left hand side of the automata."</span>
+  [row lhs]
+  (draw-half row lhs xcoords-lhs))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-rhs</span>
+  <span style="color: #cd8162;">"Given a row number, and a finite sequence of cells, draws the cells on the</span>
+<span style="color: #cd8162;">right hand side of the automata."</span>
+  [row rhs]
+  (draw-half row rhs xcoords-rhs))
+</pre>
+
+
+<p>
+This function takes an infinite set of cells and realizes only those
+parts needed to fill the canvas.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-sequence</span>
+  <span style="color: #cd8162;">"Draws the given row on the canvas, where a row is represented by</span>
+<span style="color: #cd8162;">two (possibly infinite) sequences of cells."</span>
+  [row [lhs rhs]]
+  (draw-lhs row (<span style="color: #fff68f;">take</span> LHS-CELLS lhs))
+  (draw-rhs row (<span style="color: #fff68f;">take</span> RHS-CELLS rhs)))
+</pre>
+
+
+<p>
+This function iterates the evolution of the automaton, drawing each
+generation as a row on the canvas.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-automata</span>
+  <span style="color: #cd8162;">"Draws multiple rows of the automata starting with the given start row, evolving using the given rule."</span>
+  [rule row-zero]
+  (<span style="color: #98fb98; font-weight: bold;">doseq</span> [[r s] (<span style="color: #fff68f;">map</span> vector
+                     (<span style="color: #fff68f;">range</span>)
+                     (<span style="color: #fff68f;">take</span> V-CELLS (<span style="color: #fff68f;">iterate</span> (<span style="color: #fff68f;">partial</span> evolve-seq rule) row-zero)))]
+    (draw-sequence r s)))
+</pre>
+
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-2-6" class="outline-3">
+<h3 id="sec-2-6">The UI</h3>
+<div class="outline-text-3" id="text-2-6">
+
+<p>The UI consists of a canvas, which containst the drawing of the
+evolution of the automaton. There are 8 elements to allow the user to
+select the rule graphically, and an input field to type a numeric rule
+number. The 8 elements and the numeric box are linked, so changing one
+will cause the corresponding change in the other. There is also an
+input field to select the initial configuration of the automaton,
+drawn as the first row at the top of the canvas.
+</p>
+<p>
+There are two buttons, to draw the automaton and to clear the canvas.
+</p>
+<p>
+We need to store the starting row. This is really for when the user
+elects to start with a random row. We immediately display the row, and
+then we must store it, so then when the user hits the draw button, the
+initial row doesn't get regenerated.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">start-row</span>
+  <span style="color: #cd8162;">"Holds the current starting row, set whenever the user selects a new row type."</span>
+  (<span style="color: #fff68f;">atom</span> (middle-cell)))
+</pre>
+
+
+<p>
+We have 8 checkboxes for the user to choose the current rule. Here are
+two functions to help out with those.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">get-checks</span>
+  <span style="color: #cd8162;">"Gets all the dom elements for the checkboxes on the page."</span>
+  []
+  (<span style="color: #fff68f;">map</span> #(dom/<span style="color: #6ca6cd;">getElement</span> (<span style="color: #fff68f;">str</span> <span style="color: #cd8162;">"cb-"</span> %)) (<span style="color: #fff68f;">range</span> 0 8)))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">set-checks-values</span>
+  <span style="color: #cd8162;">"Called when the user enters a rule number. Parses the number into</span>
+<span style="color: #cd8162;">    the correct configuration of check boxes to represent the rule."</span>
+  [rule]
+  (<span style="color: #98fb98; font-weight: bold;">doseq</span> [[c cb] (<span style="color: #fff68f;">map</span> vector (encode-rule rule) (get-checks))]
+    (set! (<span style="color: #6ca6cd;">.-checked</span> cb) (<span style="color: #fff68f;">not</span> (<span style="color: #fff68f;">=</span> 0 c)))))
+</pre>
+
+
+<p>
+These two functions help with converting the settings the user has
+made with the checkboxes into rules. We need to convert these settings
+into a rule number, for display in the rule number field and into a
+rule in the map format, to use to calculate the automaton's evolution.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">check-to-bit</span>
+  <span style="color: #cd8162;">"Returns 1 if the check box is checked, 0 otherwise."</span>
+  [check]
+  (<span style="color: #98fb98; font-weight: bold;">if</span> (<span style="color: #6ca6cd;">.-checked</span> check) 1 0))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">checks-value</span>
+  <span style="color: #cd8162;">"Returns a rule number decoded from the current state of the check boxes on the page."</span>
+  []
+  (decode-rule (<span style="color: #fff68f;">map</span> check-to-bit (get-checks))))
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">checks-to-rule</span>
+  <span style="color: #cd8162;">"Returns a rule represented as a map from inputs to outputs."</span>
+  [checks]
+  (<span style="color: #fff68f;">zipmap</span> ALL-INPUTS (<span style="color: #fff68f;">map</span> check-to-bit checks)))
+</pre>
+
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-onclick</span>
+  <span style="color: #cd8162;">"Called when the user presses the draw button. Draws the automata on the canvas."</span>
+  []
+  (draw-automata (checks-to-rule (get-checks)) @start-row))
+</pre>
+
+
+<p>
+This is used to generate the initial row. The function which does the
+worked is retrieved from the map of possible starting row types.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">row-types</span>
+  <span style="color: #cd8162;">"A map from the names of the row types (as entered by the user)</span>
+<span style="color: #cd8162;">to the actual row type functions."</span>
+  {<span style="color: #cd8162;">"middle-cell"</span> middle-cell
+   <span style="color: #cd8162;">"white-row"</span> white-row
+   <span style="color: #cd8162;">"black-row"</span> black-row
+   <span style="color: #cd8162;">"rand-row"</span> rand-row})
+
+(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">get-row</span>
+  <span style="color: #cd8162;">"Returns a row based on the given row type string."</span>
+  [row-type]
+  (<span style="color: #98fb98; font-weight: bold;">if</span> (row-types row-type)
+    ((row-types row-type))
+    (white-row)))
+</pre>
+
+
+<p>
+This function is called whenever the user changes the initial row
+type. The canvas is cleared and the new row is drawn at the top.
+</p>
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-first-row</span>
+  <span style="color: #cd8162;">"Clears the canvas and draws the first row."</span>
+  []
+  (clear-canvas)
+  (black)
+  (draw-sequence 0 @start-row))
+</pre>
+
+
+
+<pre class="src src-clojurescript"><span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">Set all the event handlers for the controls on the page.</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">&lt;br/&gt;&lt;b&gt;rule-no&lt;/b&gt; is a text field where the user can enter a rule number.</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">&lt;br/&gt;&lt;b&gt;draw&lt;/b&gt; is a button which draws the automata on the canvas.</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">&lt;br/&gt;&lt;b&gt;clear&lt;/b&gt; is a button which blanks the canvas, and redraws the first row.</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">&lt;br/&gt;&lt;b&gt;start&lt;/b&gt; is a text field where the user can enter the type of start row.</span>
+<span style="color: #cd4f39;">;; </span><span style="color: #cd4f39;">&lt;br/&gt;&lt;b&gt;cb&lt;1-8&gt;&lt;/b&gt; are checkboxes for picking the output for individual inputs.</span>
+(<span style="color: #98fb98; font-weight: bold;">let</span> [rule-no (dom/<span style="color: #6ca6cd;">getElement</span> <span style="color: #cd8162;">"rule-no"</span>)
+      draw (dom/<span style="color: #6ca6cd;">getElement</span> <span style="color: #cd8162;">"draw"</span>)
+      clear (dom/<span style="color: #6ca6cd;">getElement</span> <span style="color: #cd8162;">"clear"</span>)
+      start (dom/<span style="color: #6ca6cd;">getElement</span> <span style="color: #cd8162;">"start"</span>)]
+
+  (<span style="color: #98fb98; font-weight: bold;">doseq</span> [i (<span style="color: #fff68f;">range</span> 0 8)]
+          (ev/listen (dom/<span style="color: #6ca6cd;">getElement</span> (<span style="color: #fff68f;">str</span> <span style="color: #cd8162;">"cb-"</span> i))
+                     ev/EventType.CLICK
+                     #(set! (<span style="color: #6ca6cd;">.-value</span> rule-no) (checks-value))))
+
+  (ev/listen draw ev/EventType.CLICK draw-onclick)
+
+  (ev/listen clear
+             ev/EventType.CLICK
+             #(<span style="color: #98fb98; font-weight: bold;">do</span> (clear-canvas)
+                  (draw-first-row)))
+
+  (ev/listen rule-no
+             ev/EventType.KEYUP
+             #(set-checks-values (js/<span style="color: #6ca6cd;">parseInt</span> (<span style="color: #6ca6cd;">.-value</span> rule-no))))
+
+  (ev/listen start
+             ev/EventType.KEYUP
+             #(<span style="color: #98fb98; font-weight: bold;">let</span> [new-start-row (get-row (<span style="color: #6ca6cd;">.-value</span> start))]
+                (<span style="color: #fff68f;">reset!</span> start-row new-start-row)
+                (draw-first-row))))
+</pre>
+
+
+
+<pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-rules</span> [start]
+  (<span style="color: #98fb98; font-weight: bold;">when</span> (<span style="color: #fff68f;">&gt;</span> start -1)
+    (<span style="color: #6ca6cd;">.clearRect</span> CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE)
+    (set-checks-values start)
+    (draw-automata start (rand-row))
+    (js/<span style="color: #6ca6cd;">setTimeout</span> #(draw-rules (<span style="color: #fff68f;">dec</span> start)) 3000)))
+</pre>
+
+
+</div>
+</div>
+
+</div>
+
+<div id="outline-container-3" class="outline-2">
+<h2 id="sec-3">LICENSE</h2>
+<div class="outline-text-2" id="text-3">
+
+<p>This file is part of Andrew's Automata.
+</p>
+<p>
+Andrew's Automata is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+</p>
+<p>
+Andrew's Automata is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+</p>
+<p>
+You should have received a copy of the GNU General Public License
+along with Andrew's Automata. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.
+</p>
+</div>
+</div>
+</div>
+
+<div id="postamble">
+<p class="date">Date: June 2012</p>
+<p class="author">Author: Andrew Cowper</p>
+<p class="creator">Org version 7.8.11 with Emacs version 24</p>
+<a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
+
+</div>
+</body>
+</html>

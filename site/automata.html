@@ -3,19 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <title>Automata</title>
+    <link href="stylesheet.css" type="text/css" rel="stylesheet">
   </head>
   <body>
     <input id="start" value="middle-cell"/>
     <input id="rule-no" value="0"/>
-    <input type="checkbox" id="cb-0" />
-    <input type="checkbox" id="cb-1" />
-    <input type="checkbox" id="cb-2" />
-    <input type="checkbox" id="cb-3" />
-    <input type="checkbox" id="cb-4" />
-    <input type="checkbox" id="cb-5" />
-    <input type="checkbox" id="cb-6" />
-    <input type="checkbox" id="cb-7" />
-
+    <div id="checks">
+      <table>
+	<tr>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	</tr>
+	<tr>
+	  <td><div class="cell output dead"></div></td>
+	  <td><div class="cell output dead"></div></td>
+	  <td><div class="cell output dead"></div></td>
+	  <td><div class="cell output dead"></div></td>
+	  <td><div class="cell output dead"></div></td>
+	  <td><div class="cell output dead"></div></td>
+	  <td><div class="cell output dead"></div></td>
+	  <td><div class="cell output dead"></div></td>
+	</tr>
+      </table>
+      <input type="checkbox" id="cb-0" />
+      <input type="checkbox" id="cb-1" />
+      <input type="checkbox" id="cb-2" />
+      <input type="checkbox" id="cb-3" />
+      <input type="checkbox" id="cb-4" />
+      <input type="checkbox" id="cb-5" />
+      <input type="checkbox" id="cb-6" />
+      <input type="checkbox" id="cb-7" />
+    </div>
     <button id="draw" type="button">Draw</button>
     <button id="clear" type="button">Clear</button>
 

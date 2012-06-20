@@ -1,0 +1,32 @@
+body {
+    background-color: Bisque;
+    font-family: Lucida Sans Unicode, Lucida Grande, sans-serif;
+}
+
+#content {
+    width: 85%;
+    margin: 0 auto;
+}
+
+.src-clojurescript {
+    font-family: Lucida Console, Monaco, monospace;
+    background-color: black;
+    color: Cornsilk;
+}
+
+/*
+This file is part of Andrew's Automata.
+
+Andrew's Automata is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Andrew's Automata is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Andrew's Automata. If not, see <http://www.gnu.org/licenses/>.
+*/

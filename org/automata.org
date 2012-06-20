@@ -1,13 +1,17 @@
 #+PROPERTY: results silent
 #+PROPERTY: tangle ../gen/automata-tangle.cljs
+#+STYLE: <link rel="stylesheet" type="text/css" href="stylesheet.css" />
+#+TITLE: Andrew's Automata
+#+DATE: June 2012
+#+OPTIONS: num:nil toc:2
 
 * Rationale
 I started this small project in order to learn [[https://github.com/clojure/clojurescript][ClojureScript]]. When
 learning Clojure I was very familiar with programming in Java. But I
 haven't done any web programming for around 8 or 9 years, back in the
-days for EJB and JSP, so my JavaScript knowledge is very minimal, so I
-had new sympathy for people coming to Clojure with only minimal
-experience of Java and the JVM.
+days of EJB and JSP, so my JavaScript knowledge is very
+minimal. Therefore I have gained new sympathy for people coming to
+Clojure with only minimal experience of Java and the JVM.
 
 Later on I found [[http://kimavcrp.blogspot.co.uk/2012/05/literate-programming-in-clojure-table.html][blog post]] about using [[http://orgmode.org/worg/org-contrib/babel/][Babel]] within [[http://orgmode.org/][Org]]. So I am now
 documenting this little program using Org. I don't think that the
@@ -32,7 +36,7 @@ allows us to evaluate ClojureScript in a browser from a remote
 repl. The other two libraries are from Google Closure.
 
 #+begin_src clojurescript
-  (ns net.slothrop.automata
+  (ns automata
     (:require [clojure.browser.repl :as repl]
               [goog.dom :as dom]
               [goog.events :as ev]))
@@ -173,6 +177,9 @@ First we have four functions to create different initial states for the automato
 #+end_src
 *** Evolving cells
 
+For these functions a rule is represented by a map, and so calculating
+the new state for the cell is a simple map lookup, using the three
+input values as the key.
 #+begin_src clojurescript
 (defn evolve-cell
   "Takes a rule and three input cells, and produces the value for the outptut cell.
@@ -181,20 +188,36 @@ A rule is represented by a map from all possible inputs to the output."
   (rule input))
 #+end_src
 
+We represent the current state of the automata as two sequences, and
+so we have two functions here. The first evolves the left hand side of
+the automaton. We use partition to split the sequence up into the sets
+of three inputs that each cell requires to determine its state for the
+next generation. Note that we have to peek at one item from the other
+side in order to have the inputs for the first cell on the left hand
+side. Note also the use of reverse, the left hand side runs from right
+to left, but the inputs in the rules are specified from left to right.
+
+The second function is a little simpler as it does not have to do the
+reverse. 
+
+In both of these functions we could replace "(partial evolve-cell
+rule)" with simply "rule". It used to be more complicated to do the
+calculation before I started using a map for the rule, and I've left
+it how it was as I think it is a little more explicit this way.
 #+begin_src clojurescript
 (defn evolve-lhs
   "Computes one evolution of the left hand side of the automata."
   [rule lhs rhs]
   (map (comp (partial evolve-cell rule) reverse) (partition 3 1 (cons (first rhs) lhs))))
-#+end_src
 
-#+begin_src clojurescript
 (defn evolve-rhs
   "Computes one evolution of the right hand side of the automata."
   [rule lhs rhs]
   (map (partial evolve-cell rule) (partition 3 1 (cons (first lhs) rhs))))
 #+end_src
 
+This function simply produces a new complete state for the automaton
+by seperately evolving the old state's two halves.
 #+begin_src clojurescript
 (defn evolve-seq
   "Computes one evolution of the automata."
@@ -291,42 +314,37 @@ initial row doesn't get regenerated.
   (atom (middle-cell)))
 #+end_src
 
+We have 8 checkboxes for the user to choose the current rule. Here are
+two functions to help out with those.
 #+begin_src clojurescript
-(defn get-checks
-  "Gets all the dom elements for the checkboxes on the page."
-  []
-  (map #(dom/getElement (str "cb-" %)) (range 0 8)))
-#+end_src
-
-Each one of these inputs is given a value which is a
-power of two. These are also enumerated here and they are used to
-convert from a numeric rule specification into a map of possible
-inputs to outputs, and vice versa.
-#+begin_src clojurescript
-  (defn set-checks
+  (defn get-checks
+    "Gets all the dom elements for the checkboxes on the page."
+    []
+    (map #(dom/getElement (str "cb-" %)) (range 0 8)))
+  
+  (defn set-checks-values
     "Called when the user enters a rule number. Parses the number into
-  the correct configuration of check boxes to represent the rule."
+      the correct configuration of check boxes to represent the rule."
     [rule]
     (doseq [[c cb] (map vector (encode-rule rule) (get-checks))]
       (set! (.-checked cb) (not (= 0 c)))))
 #+end_src
 
-
+These two functions help with converting the settings the user has
+made with the checkboxes into rules. We need to convert these settings
+into a rule number, for display in the rule number field and into a
+rule in the map format, to use to calculate the automaton's evolution.
 #+begin_src clojurescript
-(defn check-to-bit
-  "Returns 1 if the check box is checked, 0 otherwise."
-  [check]
-  (if (.-checked check) 1 0))
-#+end_src
+  (defn check-to-bit
+    "Returns 1 if the check box is checked, 0 otherwise."
+    [check]
+    (if (.-checked check) 1 0))
 
-#+begin_src clojurescript
-(defn checks-value
-  "Returns a rule number decoded from the current state of the check boxes on the page."
-  []
-  (decode-rule (map check-to-bit (get-checks))))
-#+end_src
+  (defn checks-value
+    "Returns a rule number decoded from the current state of the check boxes on the page."
+    []
+    (decode-rule (map check-to-bit (get-checks))))
 
-#+begin_src clojurescript
   (defn checks-to-rule
     "Returns a rule represented as a map from inputs to outputs."
     [checks]
@@ -334,10 +352,10 @@ inputs to outputs, and vice versa.
 #+end_src
 
 #+begin_src clojurescript
-(defn draw-onclick
-  "Called when the user presses the draw button. Draws the automata on the canvas."
-  []
-  (draw-automata (checks-to-rule (get-checks)) @start-row))
+  (defn draw-onclick
+    "Called when the user presses the draw button. Draws the automata on the canvas."
+    []
+    (draw-automata (checks-to-rule (get-checks)) @start-row))
 #+end_src
 
 This is used to generate the initial row. The function which does the
@@ -350,7 +368,6 @@ worked is retrieved from the map of possible starting row types.
      "white-row" white-row
      "black-row" black-row
      "rand-row" rand-row})
-  
   
   (defn get-row
     "Returns a row based on the given row type string."
@@ -372,45 +389,45 @@ type. The canvas is cleared and the new row is drawn at the top.
 #+end_src
 
 #+begin_src clojurescript
-;; Set all the event handlers for the controls on the page.
-;; <br/><b>rule-no</b> is a text field where the user can enter a rule number.
-;; <br/><b>draw</b> is a button which draws the automata on the canvas.
-;; <br/><b>clear</b> is a button which blanks the canvas, and redraws the first row.
-;; <br/><b>start</b> is a text field where the user can enter the type of start row.
-;; <br/><b>cb<1-8></b> are checkboxes for picking the output for individual inputs.
-(let [rule-no (dom/getElement "rule-no")
-      draw (dom/getElement "draw")
-      clear (dom/getElement "clear")
-      start (dom/getElement "start")]
-
-  (doseq [i (range 0 8)]
-          (ev/listen (dom/getElement (str "cb-" i))
-                     ev/EventType.CLICK
-                     #(set! (.-value rule-no) (checks-value))))
-
-  (ev/listen draw ev/EventType.CLICK draw-onclick)
-
-  (ev/listen clear
-             ev/EventType.CLICK
-             #(do (clear-canvas)
-                  (draw-first-row)))
-
-  (ev/listen rule-no
-             ev/EventType.KEYUP
-             #(set-checks (js/parseInt (.-value rule-no))))
-
-  (ev/listen start
-             ev/EventType.KEYUP
-             #(let [new-start-row (get-row (.-value start))]
-                (reset! start-row new-start-row)
-                (draw-first-row))))
+  ;; Set all the event handlers for the controls on the page.
+  ;; <br/><b>rule-no</b> is a text field where the user can enter a rule number.
+  ;; <br/><b>draw</b> is a button which draws the automata on the canvas.
+  ;; <br/><b>clear</b> is a button which blanks the canvas, and redraws the first row.
+  ;; <br/><b>start</b> is a text field where the user can enter the type of start row.
+  ;; <br/><b>cb<1-8></b> are checkboxes for picking the output for individual inputs.
+  (let [rule-no (dom/getElement "rule-no")
+        draw (dom/getElement "draw")
+        clear (dom/getElement "clear")
+        start (dom/getElement "start")]
+    
+    (doseq [i (range 0 8)]
+            (ev/listen (dom/getElement (str "cb-" i))
+                       ev/EventType.CLICK
+                       #(set! (.-value rule-no) (checks-value))))
+  
+    (ev/listen draw ev/EventType.CLICK draw-onclick)
+  
+    (ev/listen clear
+               ev/EventType.CLICK
+               #(do (clear-canvas)
+                    (draw-first-row)))
+  
+    (ev/listen rule-no
+               ev/EventType.KEYUP
+               #(set-checks-values (js/parseInt (.-value rule-no))))
+  
+    (ev/listen start
+               ev/EventType.KEYUP
+               #(let [new-start-row (get-row (.-value start))]
+                  (reset! start-row new-start-row)
+                  (draw-first-row))))
 #+end_src
 
 #+begin_src clojurescript
 (defn draw-rules [start]
   (when (> start -1)
     (.clearRect CANVAS 0 0 CANVAS-SIZE CANVAS-SIZE)
-    (set-checks start)
+    (set-checks-values start)
     (draw-automata start (rand-row))
     (js/setTimeout #(draw-rules (dec start)) 3000)))
 #+end_src
