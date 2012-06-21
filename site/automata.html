@@ -6,11 +6,10 @@
     <link href="stylesheet.css" type="text/css" rel="stylesheet">
   </head>
   <body>
-    <input id="start" value="middle-cell"/>
-    <input id="rule-no" value="0"/>
     <div id="checks">
       <table>
 	<tr>
+	  <td>Input</td>
 	  <td>
 	    <table>
 	      <tr>
@@ -85,6 +84,7 @@
 	  </td>
 	</tr>
 	<tr>
+	  <td>Output</td>
 	  <td><div class="cell output dead" id="cb-0"></div></td>
 	  <td><div class="cell output dead" id="cb-1"></div></td>
 	  <td><div class="cell output dead" id="cb-2"></div></td>
@@ -96,11 +96,19 @@
 	</tr>
       </table>
     </div>
-    <button id="draw" type="button">Draw</button>
-    <button id="clear" type="button">Clear</button>
-
-    <canvas id="canvas" width="300" height="300" />
-
+    <div id="controls">
+      <button id="draw" type="button">Draw</button>
+      <select id="start" type="select" value="middle-cell">
+	<option value="middle-cell">One Cell</option>
+	<option value="rand-row">Random</option>
+	<option value="white-row">All Dead</option>
+	<option value="black-row">All Alive</option>
+      </select>
+      <input id="rule-no" value="0"/>
+    </div>
+    <div>
+      <canvas id="canvas" width="300" height="300" />
+    </div>
     <script type="text/javascript" src="automata.js"></script>
     <script type="text/javascript">goog.require('automata');</script>
     <script>

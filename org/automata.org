@@ -66,7 +66,7 @@ to fill the canvas.
 #+begin_src clojurescript
   (def V-CELLS "The number of cells in a column on the canvas." (int (/ CANVAS-SIZE 6)))
   (def LHS-CELLS "The number of cells on the left hand side of a row on the canvas." (int (/ CANVAS-SIZE 12)))
-  (def RHS-CELLS "The number of cells on the left hand side of a row on the canvas." LHS-CELLS)
+  (def RHS-CELLS "The number of cells on the left hand side of a row on the canvas." (inc LHS-CELLS))
 #+end_src
 
 Not strictly speaking the canvas, but all interaction with the canvas
@@ -303,7 +303,7 @@ will cause the corresponding change in the other. There is also an
 input field to select the initial configuration of the automaton,
 drawn as the first row at the top of the canvas.
 
-There are two buttons, to draw the automaton and to clear the canvas.
+There is one button, which clears the canvas and draws the automaton.
 
 We need to store the starting row. This is really for when the user
 elects to start with a random row. We immediately display the row, and
@@ -360,6 +360,7 @@ rule in the map format, to use to calculate the automaton's evolution.
   (defn draw-onclick
     "Called when the user presses the draw button. Draws the automata on the canvas."
     []
+    (clear-canvas)
     (draw-automata (checks-to-rule (get-checks)) @start-row))
   
   (defn check-onclick
@@ -403,12 +404,10 @@ type. The canvas is cleared and the new row is drawn at the top.
   ;; Set all the event handlers for the controls on the page.
   ;; <br/><b>rule-no</b> is a text field where the user can enter a rule number.
   ;; <br/><b>draw</b> is a button which draws the automata on the canvas.
-  ;; <br/><b>clear</b> is a button which blanks the canvas, and redraws the first row.
-  ;; <br/><b>start</b> is a text field where the user can enter the type of start row.
-  ;; <br/><b>cb<1-8></b> are checkboxes for picking the output for individual inputs.
+  ;; <br/><b>start</b> is a select box where the user can choose the type of start row.
+  ;; <br/><b>cb<1-8></b> are checks for picking the output for individual inputs.
   (let [rule-no (dom/getElement "rule-no")
         draw (dom/getElement "draw")
-        clear (dom/getElement "clear")
         start (dom/getElement "start")]
     
     (doseq [i (range 0 8)]
@@ -419,17 +418,12 @@ type. The canvas is cleared and the new row is drawn at the top.
   
     (ev/listen draw ev/EventType.CLICK draw-onclick)
   
-    (ev/listen clear
-               ev/EventType.CLICK
-               #(do (clear-canvas)
-                    (draw-first-row)))
-  
     (ev/listen rule-no
                ev/EventType.KEYUP
                #(set-checks-values (js/parseInt (.-value rule-no))))
   
     (ev/listen start
-               ev/EventType.KEYUP
+               ev/EventType.CHANGE
                #(let [new-start-row (get-row (.-value start))]
                   (reset! start-row new-start-row)
                   (draw-first-row))))

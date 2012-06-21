@@ -1,5 +1,6 @@
 body {
     background-color: Bisque;
+    font-family: Lucida Sans Unicode, Lucida Grande, sans-serif;
 }
 
 table {
@@ -23,7 +24,18 @@ table {
 .output {
     margin: 0 auto;
 }
-    
+
+#canvas {
+    border: 1px solid black;
+}
+
+div#checks {
+    margin: 20px 0;
+}
+
+div#controls {
+    margin: 20px 0;
+}
 
 /*
 This file is part of Andrew's Automata.
