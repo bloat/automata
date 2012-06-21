@@ -39,6 +39,7 @@ repl. The other two libraries are from Google Closure.
   (ns automata
     (:require [clojure.browser.repl :as repl]
               [goog.dom :as dom]
+              [goog.dom.classes :as cls]
               [goog.events :as ev]))
 #+end_src
 
@@ -317,6 +318,10 @@ initial row doesn't get regenerated.
 We have 8 checkboxes for the user to choose the current rule. Here are
 two functions to help out with those.
 #+begin_src clojurescript
+  (defn swap-alive-dead
+    [cb dead]
+    (apply cls/addRemove cb (if dead ["alive" "dead"] ["dead" "alive"])))
+  
   (defn get-checks
     "Gets all the dom elements for the checkboxes on the page."
     []
@@ -327,7 +332,7 @@ two functions to help out with those.
       the correct configuration of check boxes to represent the rule."
     [rule]
     (doseq [[c cb] (map vector (encode-rule rule) (get-checks))]
-      (set! (.-checked cb) (not (= 0 c)))))
+      (swap-alive-dead cb (= 0 c))))
 #+end_src
 
 These two functions help with converting the settings the user has
@@ -338,7 +343,7 @@ rule in the map format, to use to calculate the automaton's evolution.
   (defn check-to-bit
     "Returns 1 if the check box is checked, 0 otherwise."
     [check]
-    (if (.-checked check) 1 0))
+    (if (cls/has check "alive") 1 0))
 
   (defn checks-value
     "Returns a rule number decoded from the current state of the check boxes on the page."
@@ -356,6 +361,12 @@ rule in the map format, to use to calculate the automaton's evolution.
     "Called when the user presses the draw button. Draws the automata on the canvas."
     []
     (draw-automata (checks-to-rule (get-checks)) @start-row))
+  
+  (defn check-onclick
+    "Called when the user presses one of the output cells on the rule specifier."
+    [cell rule-no]
+    (swap-alive-dead cell (cls/has cell "alive"))
+    (set! (.-value rule-no) (checks-value)))
 #+end_src
 
 This is used to generate the initial row. The function which does the
@@ -401,9 +412,10 @@ type. The canvas is cleared and the new row is drawn at the top.
         start (dom/getElement "start")]
     
     (doseq [i (range 0 8)]
-            (ev/listen (dom/getElement (str "cb-" i))
-                       ev/EventType.CLICK
-                       #(set! (.-value rule-no) (checks-value))))
+      (let [check (dom/getElement (str "cb-" i))]
+        (ev/listen check
+                   ev/EventType.CLICK
+                   #(check-onclick check rule-no))))
   
     (ev/listen draw ev/EventType.CLICK draw-onclick)
   
