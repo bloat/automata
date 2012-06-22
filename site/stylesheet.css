@@ -3,16 +3,38 @@ body {
     font-family: Lucida Sans Unicode, Lucida Grande, sans-serif;
 }
 
-#content {
-    width: 85%;
-    margin: 0 auto;
-    line-height: 150%;
+table {
+    border: 0;
 }
 
-.src-clojurescript {
-    font-family: Lucida Console, Monaco, monospace;
-    background-color: DarkSlateGray;
-    color: Cornsilk;
+.cell {
+    height: 16px;
+    width: 16px;
+    border: 1px solid black;
+}
+
+.alive {
+    background-color: black;
+}
+
+.dead {
+    background-color: white;
+}
+
+.output {
+    margin: 0 auto;
+}
+
+#canvas {
+    border: 1px solid black;
+}
+
+div#checks {
+    margin: 20px 0;
+}
+
+div#controls {
+    margin: 20px 0;
 }
 
 /*

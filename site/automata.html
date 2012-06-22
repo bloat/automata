@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Automata</title>
+    <link href="stylesheet.css" type="text/css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="checks">
+      <table>
+	<tr>
+	  <td>Input</td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell alive"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	  <td>
+	    <table>
+	      <tr>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+		<td><div class="cell dead"></div></td>
+	      </tr>
+	    </table>
+	  </td>
+	</tr>
+	<tr>
+	  <td>Output</td>
+	  <td><div class="cell output dead" id="cb-0"></div></td>
+	  <td><div class="cell output dead" id="cb-1"></div></td>
+	  <td><div class="cell output dead" id="cb-2"></div></td>
+	  <td><div class="cell output dead" id="cb-3"></div></td>
+	  <td><div class="cell output dead" id="cb-4"></div></td>
+	  <td><div class="cell output dead" id="cb-5"></div></td>
+	  <td><div class="cell output dead" id="cb-6"></div></td>
+	  <td><div class="cell output dead" id="cb-7"></div></td>
+	</tr>
+      </table>
+    </div>
+    <div id="controls">
+      <button id="draw" type="button">Draw</button>
+      <select id="start" type="select" value="middle-cell">
+	<option value="middle-cell">One Cell</option>
+	<option value="rand-row">Random</option>
+	<option value="white-row">All Dead</option>
+	<option value="black-row">All Alive</option>
+      </select>
+      <input id="rule-no" value="0"/>
+    </div>
+    <div>
+      <canvas id="canvas" width="300" height="300" />
+    </div>
+    <script type="text/javascript" src="automata.js"></script>
+    <script type="text/javascript">goog.require('automata');</script>
+    <script>
+    </script>
+  </body>
+</html>
+
+<!--
+This file is part of Andrew's Automata.
+
+Andrew's Automata is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Andrew's Automata is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Andrew's Automata. If not, see <http://www.gnu.org/licenses/>.
+-->
