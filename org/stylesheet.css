@@ -6,11 +6,12 @@ body {
 #content {
     width: 85%;
     margin: 0 auto;
+    line-height: 150%;
 }
 
 .src-clojurescript {
     font-family: Lucida Console, Monaco, monospace;
-    background-color: black;
+    background-color: DarkSlateGray;
     color: Cornsilk;
 }
 
