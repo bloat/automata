@@ -41,4 +41,4 @@ cp -v org/stylesheet.css ${GHPAGES}
 cp -v site/automata.html site/stylesheet.css site/automata.js ${GHPAGES}/site
 
 # Marginalia
-lein marg -d ../automata-gh/automata -f marginalia.html -n "Andrew's Automata" -D "A project to learn ClojureScript" cljs
+lein marg -d ../automata-gh/automata -f marginalia.html -n "Andrew's Automata" -D "A project to learn ClojureScript" gen
