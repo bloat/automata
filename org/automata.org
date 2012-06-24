@@ -3,7 +3,8 @@
 #+STYLE: <link rel="stylesheet" type="text/css" href="stylesheet.css" />
 #+TITLE: Andrew's Automata
 #+DATE: June 2012
-#+OPTIONS: num:nil toc:2
+#+EMAIL: andrew.cowper@slothrop.net
+#+OPTIONS: num:nil toc:2 email:t
 
 * Rationale
 This is a ClojureScript application which draws evolution diagrams of
