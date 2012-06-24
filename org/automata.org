@@ -6,6 +6,9 @@
 #+OPTIONS: num:nil toc:2
 
 * Rationale
+This is a ClojureScript application which draws evolution diagrams of
+[[http://mathworld.wolfram.com/ElementaryCellularAutomaton.html][one dimensional cellular]] automata on a web page.
+
 I started this small project in order to learn [[https://github.com/clojure/clojurescript][ClojureScript]]. When
 learning Clojure I was very familiar with programming in Java. But I
 haven't done any web programming for around 8 or 9 years, back in the
@@ -16,18 +19,19 @@ Clojure with only minimal experience of Java and the JVM.
 Later on I found [[http://kimavcrp.blogspot.co.uk/2012/05/literate-programming-in-clojure-table.html][blog post]] about using [[http://orgmode.org/worg/org-contrib/babel/][Babel]] within [[http://orgmode.org/][Org]]. So I am now
 documenting this little program using Org. I don't think that the
 elisp code in that post is quite correct, but that is another
-subject. I am using the default set up for Babel and Clojure without
-writing any custom elisp for evaluation. This means that I am tied to
-Slime for Clojure, which of course makes things tricky for
-ClojureScript as there is no Swank server for Javascript
-yet. ClojureScript works best with lein and the [[https://github.com/emezeske/lein-cljsbuild][cljsbuild]] plugin,
-which provides various REPLs. These can be used from the Emacs
-inferior-lisp mode but strangely, there is no Babel plugin for
+subject. For Clojure I am using the default set up within Babel
+without writing any custom elisp for evaluation. This means that I am
+tied to Slime for Clojure, which makes things tricky for ClojureScript
+as there is no Swank server for Javascript yet. 
+
+I find that ClojureScript works best with lein and the [[https://github.com/emezeske/lein-cljsbuild][cljsbuild]]
+plugin, which provides various REPLs. These can be used from the Emacs
+inferior-lisp mode but it seems there is no generic Babel plugin for
 inferior-lisp, only for various Slime flavours. Luckily it wasn't too
 hard to [[http://github.com/bloat/babel-clojurescript][build]] something that did the job.
 
-The other Clojure documentation tool is [[https://github.com/fogus/marginalia][Marginalia]]. Marginalie is more
-like javadoc in that it extracts the comments from your source code to
+The other Clojure documentation tool is [[https://github.com/fogus/marginalia][Marginalia]]. Marginalia is more
+like Javadoc in that it extracts the comments from your source code to
 build the documentation. Its main distinguishing feature is the way it
 sets the comments next to the code so its really easy to read both
 code and comments at the same time. I run Marginalia over the source
@@ -42,7 +46,8 @@ The results of all this are as follows
  - [[https://github.com/bloat/automata][All the source]] is on github.
 
 And finally 
- - [[http://git.slothrop.net/automata/site/automata.html][The site itself]] where you can explore 1 dimensional cellular automata to your hearts content!
+ - [[http://git.slothrop.net/automata/site/automata.html][The site itself]] where you can explore one dimensional cellular
+   automata to your hearts content!
 
 Please feel free to get in touch with any comments or feedback.
 * The Code
@@ -95,7 +100,7 @@ Closure.
         (.getContext "2d")))
 #+end_src
 ** Rules
-[[http://en.wikipedia.org/wiki/Cellular_automaton#Elementary_cellular_automata][1 dimensional cellular automata]] consist of a single infinite line of
+[[http://en.wikipedia.org/wiki/Cellular_automaton#Elementary_cellular_automata][One dimensional cellular automata]] consist of a single infinite line of
 cells, and a rule for evolving the next generation. Each cell can be
 either on or off (black or white, alive or dead, etc.). The rule is
 defined by specifying an output for all possible inputs. For each
@@ -245,12 +250,12 @@ by seperately evolving the old state's two halves.
 
 *** Passing the cells to the drawing functions
 Once the cells have been calculated, they must be drawn. The drawing
-function above draws a single cell, and it requires cell coordinated,
+function above draws a single cell, and it requires cell coordinates,
 which it will then convert to coordinates on the canvas.
 
-These two functions return ranges of cell coordinates. For the left
-hand side these start at -1 and decrease. For the right hand side they
-start at 0 and increase.
+These two functions return ranges of cell coordinates for the
+x-axis. For the left hand side these start at -1 and decrease. For the
+right hand side they start at 0 and increase.
 #+begin_src clojurescript
 (defn xcoords-lhs
   "Returns the cell x-coordinates for a finite sequence of cells on the
@@ -266,7 +271,9 @@ right hand side of the automata."
   (range 0 (count cells)))
 #+end_src
 
-The next three functions are used to draw half a row of the automaton.
+The next three functions are used to draw half a row of the
+automaton. The first is a utility and can draw either side, and the
+next two are specializations which call it.
 #+begin_src clojurescript
 (defn draw-half
   "Given a row number, and a finite sequence of cells, draws the cells on one half of the automata.
@@ -288,8 +295,10 @@ right hand side of the automata."
   (draw-half row rhs xcoords-rhs))
 #+end_src
 
-This function takes an infinite set of cells and realizes only those
-parts needed to fill the canvas.
+This function takes one complete generation of the automaton (i.e. two
+infinite sequences of cells as described above) and realizes only
+those parts needed to fill the canvas. It also takes a row (or
+generation) number which specifies how far down to draw the row.
 #+begin_src clojurescript
 (defn draw-sequence
   "Draws the given row on the canvas, where a row is represented by
@@ -311,7 +320,7 @@ generation as a row on the canvas.
     (draw-sequence r s)))
 #+end_src
 ** The UI
-The UI consists of a canvas, which containst the drawing of the
+The UI consists of a canvas, which contains the drawing of the
 evolution of the automaton. There are 8 elements to allow the user to
 select the rule graphically, and an input field to type a numeric rule
 number. The 8 elements and the numeric box are linked, so changing one
@@ -331,8 +340,9 @@ initial row doesn't get regenerated.
   (atom (middle-cell)))
 #+end_src
 
-We have 8 checkboxes for the user to choose the current rule. Here are
-two functions to help out with those.
+We have 8 input elements (drawn with divs in a table) for the user to
+choose the current rule. Here are two functions to help out with
+those.
 #+begin_src clojurescript
   (defn swap-alive-dead
     [cb dead]
@@ -352,17 +362,18 @@ two functions to help out with those.
 #+end_src
 
 These two functions help with converting the settings the user has
-made with the checkboxes into rules. We need to convert these settings
-into a rule number, for display in the rule number field and into a
-rule in the map format, to use to calculate the automaton's evolution.
+made with the input elements into rules. We need to convert these
+settings into a rule number, for display in the rule number field and
+into a rule in the map format, to use to calculate the automaton's
+evolution.
 #+begin_src clojurescript
   (defn check-to-bit
-    "Returns 1 if the check box is checked, 0 otherwise."
+    "Returns 1 if the element is checked, 0 otherwise."
     [check]
     (if (cls/has check "alive") 1 0))
 
   (defn checks-value
-    "Returns a rule number decoded from the current state of the check boxes on the page."
+    "Returns a rule number decoded from the current state of the input elements on the page."
     []
     (decode-rule (map check-to-bit (get-checks))))
 
@@ -372,6 +383,7 @@ rule in the map format, to use to calculate the automaton's evolution.
     (zipmap ALL-INPUTS (map check-to-bit checks)))
 #+end_src
 
+These two functions are the onclick handlers for the various input elements. 
 #+begin_src clojurescript
   (defn draw-onclick
     "Called when the user presses the draw button. Draws the automata on the canvas."
@@ -391,14 +403,15 @@ worked is retrieved from the map of possible starting row types.
 #+begin_src clojurescript
   (def row-types
     "A map from the names of the row types (as entered by the user)
-  to the actual row type functions."
+    to the actual row type functions."
     {"middle-cell" middle-cell
      "white-row" white-row
      "black-row" black-row
      "rand-row" rand-row})
   
   (defn get-row
-    "Returns a row based on the given row type string."
+    "Returns a row based on the given row type string. 
+     Returns an all white row if the row type is unrecognised"
     [row-type]
     (if (row-types row-type)
       ((row-types row-type))

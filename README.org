@@ -4,7 +4,7 @@ Andrew's Automata is a toy app for learning Clojure Script and web programming.
 
 I wrote it to help teach myself these things.
 
-The main artifact is the [[http://git.slothop.net/automata][Documented source code]], and of course the [[http://git.slothrop.net/automata/site/automata.html][application]] itself.
+The main artifact is the [[http://git.slothrop.net/automata][documented source code]], and of course the [[http://git.slothrop.net/automata/site/automata.html][application]] itself.
 
 * License
 
