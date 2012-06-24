@@ -119,7 +119,11 @@
 <h2 id="sec-1">Rationale</h2>
 <div class="outline-text-2" id="text-1">
 
-<p>I started this small project in order to learn <a href="https://github.com/clojure/clojurescript">ClojureScript</a>. When
+<p>This is a ClojureScript application which draws evolution diagrams of
+<a href="http://mathworld.wolfram.com/ElementaryCellularAutomaton.html">one dimensional cellular</a> automata on a web page.
+</p>
+<p>
+I started this small project in order to learn <a href="https://github.com/clojure/clojurescript">ClojureScript</a>. When
 learning Clojure I was very familiar with programming in Java. But I
 haven't done any web programming for around 8 or 9 years, back in the
 days of EJB and JSP, so my JavaScript knowledge is very
@@ -130,19 +134,21 @@ Clojure with only minimal experience of Java and the JVM.
 Later on I found <a href="http://kimavcrp.blogspot.co.uk/2012/05/literate-programming-in-clojure-table.html">blog post</a> about using <a href="http://orgmode.org/worg/org-contrib/babel/">Babel</a> within <a href="http://orgmode.org/">Org</a>. So I am now
 documenting this little program using Org. I don't think that the
 elisp code in that post is quite correct, but that is another
-subject. I am using the default set up for Babel and Clojure without
-writing any custom elisp for evaluation. This means that I am tied to
-Slime for Clojure, which of course makes things tricky for
-ClojureScript as there is no Swank server for Javascript
-yet. ClojureScript works best with lein and the <a href="https://github.com/emezeske/lein-cljsbuild">cljsbuild</a> plugin,
-which provides various REPLs. These can be used from the Emacs
-inferior-lisp mode but strangely, there is no Babel plugin for
+subject. For Clojure I am using the default set up within Babel
+without writing any custom elisp for evaluation. This means that I am
+tied to Slime for Clojure, which makes things tricky for ClojureScript
+as there is no Swank server for Javascript yet. 
+</p>
+<p>
+I find that ClojureScript works best with lein and the <a href="https://github.com/emezeske/lein-cljsbuild">cljsbuild</a>
+plugin, which provides various REPLs. These can be used from the Emacs
+inferior-lisp mode but it seems there is no generic Babel plugin for
 inferior-lisp, only for various Slime flavours. Luckily it wasn't too
 hard to <a href="http://github.com/bloat/babel-clojurescript">build</a> something that did the job.
 </p>
 <p>
-The other Clojure documentation tool is <a href="https://github.com/fogus/marginalia">Marginalia</a>. Marginalie is more
-like javadoc in that it extracts the comments from your source code to
+The other Clojure documentation tool is <a href="https://github.com/fogus/marginalia">Marginalia</a>. Marginalia is more
+like Javadoc in that it extracts the comments from your source code to
 build the documentation. Its main distinguishing feature is the way it
 sets the comments next to the code so its really easy to read both
 code and comments at the same time. I run Marginalia over the source
@@ -167,7 +173,8 @@ The results of all this are as follows
 <p>
 And finally 
 </p><ul>
-<li><a href="http://git.slothrop.net/automata/site/automata.html">The site itself</a> where you can explore 1 dimensional cellular automata to your hearts content!
+<li><a href="http://git.slothrop.net/automata/site/automata.html">The site itself</a> where you can explore one dimensional cellular
+   automata to your hearts content!
 </li>
 </ul>
 
