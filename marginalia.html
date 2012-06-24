@@ -3155,10 +3155,10 @@ two (possibly infinite) sequences of cells.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn set-checks-values
   [rule]
   (doseq [[c cb] (map vector (encode-rule rule) (get-checks))]
-    (swap-alive-dead cb (= 0 c))))</pre></td></tr><tr><td class="docs"><p>Returns 1 if the check box is checked, 0 otherwise.</p>
+    (swap-alive-dead cb (= 0 c))))</pre></td></tr><tr><td class="docs"><p>Returns 1 if the element is checked, 0 otherwise.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn check-to-bit
   [check]
-  (if (cls/has check &quot;alive&quot;) 1 0))</pre></td></tr><tr><td class="docs"><p>Returns a rule number decoded from the current state of the check boxes on the page.</p>
+  (if (cls/has check &quot;alive&quot;) 1 0))</pre></td></tr><tr><td class="docs"><p>Returns a rule number decoded from the current state of the input elements on the page.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn checks-value
   []
   (decode-rule (map check-to-bit (get-checks))))</pre></td></tr><tr><td class="docs"><p>Returns a rule represented as a map from inputs to outputs.</p>
@@ -3173,12 +3173,13 @@ two (possibly infinite) sequences of cells.</p>
   [cell rule-no]
   (swap-alive-dead cell (cls/has cell &quot;alive&quot;))
   (set! (.-value rule-no) (checks-value)))</pre></td></tr><tr><td class="docs"><p>A map from the names of the row types (as entered by the user)
-to the actual row type functions.</p>
+  to the actual row type functions.</p>
 </td><td class="codes"><pre class="brush: clojure">(def row-types
   {&quot;middle-cell&quot; middle-cell
    &quot;white-row&quot; white-row
    &quot;black-row&quot; black-row
-   &quot;rand-row&quot; rand-row})</pre></td></tr><tr><td class="docs"><p>Returns a row based on the given row type string.</p>
+   &quot;rand-row&quot; rand-row})</pre></td></tr><tr><td class="docs"><p>Returns a row based on the given row type string. 
+   Returns an all white row if the row type is unrecognised</p>
 </td><td class="codes"><pre class="brush: clojure">(defn get-row
   [row-type]
   (if (row-types row-type)

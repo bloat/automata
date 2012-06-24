@@ -276,7 +276,7 @@ Closure.
 <h3 id="sec-2-3">Rules</h3>
 <div class="outline-text-3" id="text-2-3">
 
-<p><a href="http://en.wikipedia.org/wiki/Cellular_automaton#Elementary_cellular_automata">1 dimensional cellular automata</a> consist of a single infinite line of
+<p><a href="http://en.wikipedia.org/wiki/Cellular_automaton#Elementary_cellular_automata">One dimensional cellular automata</a> consist of a single infinite line of
 cells, and a rule for evolving the next generation. Each cell can be
 either on or off (black or white, alive or dead, etc.). The rule is
 defined by specifying an output for all possible inputs. For each
@@ -486,13 +486,13 @@ by seperately evolving the old state's two halves.
 <div class="outline-text-4" id="text-2-5-2">
 
 <p>Once the cells have been calculated, they must be drawn. The drawing
-function above draws a single cell, and it requires cell coordinated,
+function above draws a single cell, and it requires cell coordinates,
 which it will then convert to coordinates on the canvas.
 </p>
 <p>
-These two functions return ranges of cell coordinates. For the left
-hand side these start at -1 and decrease. For the right hand side they
-start at 0 and increase.
+These two functions return ranges of cell coordinates for the
+x-axis. For the left hand side these start at -1 and decrease. For the
+right hand side they start at 0 and increase.
 </p>
 
 
@@ -512,7 +512,9 @@ start at 0 and increase.
 
 
 <p>
-The next three functions are used to draw half a row of the automaton.
+The next three functions are used to draw half a row of the
+automaton. The first is a utility and can draw either side, and the
+next two are specializations which call it.
 </p>
 
 
@@ -538,8 +540,10 @@ The next three functions are used to draw half a row of the automaton.
 
 
 <p>
-This function takes an infinite set of cells and realizes only those
-parts needed to fill the canvas.
+This function takes one complete generation of the automaton (i.e. two
+infinite sequences of cells as described above) and realizes only
+those parts needed to fill the canvas. It also takes a row (or
+generation) number which specifies how far down to draw the row.
 </p>
 
 
@@ -576,7 +580,7 @@ generation as a row on the canvas.
 <h3 id="sec-2-6">The UI</h3>
 <div class="outline-text-3" id="text-2-6">
 
-<p>The UI consists of a canvas, which containst the drawing of the
+<p>The UI consists of a canvas, which contains the drawing of the
 evolution of the automaton. There are 8 elements to allow the user to
 select the rule graphically, and an input field to type a numeric rule
 number. The 8 elements and the numeric box are linked, so changing one
@@ -602,8 +606,9 @@ initial row doesn't get regenerated.
 
 
 <p>
-We have 8 checkboxes for the user to choose the current rule. Here are
-two functions to help out with those.
+We have 8 input elements (drawn with divs in a table) for the user to
+choose the current rule. Here are two functions to help out with
+those.
 </p>
 
 
@@ -627,19 +632,20 @@ two functions to help out with those.
 
 <p>
 These two functions help with converting the settings the user has
-made with the checkboxes into rules. We need to convert these settings
-into a rule number, for display in the rule number field and into a
-rule in the map format, to use to calculate the automaton's evolution.
+made with the input elements into rules. We need to convert these
+settings into a rule number, for display in the rule number field and
+into a rule in the map format, to use to calculate the automaton's
+evolution.
 </p>
 
 
 <pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">check-to-bit</span>
-  <span style="color: #cd8162;">"Returns 1 if the check box is checked, 0 otherwise."</span>
+  <span style="color: #cd8162;">"Returns 1 if the element is checked, 0 otherwise."</span>
   [check]
   (<span style="color: #98fb98; font-weight: bold;">if</span> (cls/has check <span style="color: #cd8162;">"alive"</span>) 1 0))
 
 (<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">checks-value</span>
-  <span style="color: #cd8162;">"Returns a rule number decoded from the current state of the check boxes on the page."</span>
+  <span style="color: #cd8162;">"Returns a rule number decoded from the current state of the input elements on the page."</span>
   []
   (decode-rule (<span style="color: #fff68f;">map</span> check-to-bit (get-checks))))
 
@@ -649,6 +655,10 @@ rule in the map format, to use to calculate the automaton's evolution.
   (<span style="color: #fff68f;">zipmap</span> ALL-INPUTS (<span style="color: #fff68f;">map</span> check-to-bit checks)))
 </pre>
 
+
+<p>
+These two functions are the onclick handlers for the various input elements. 
+</p>
 
 
 <pre class="src src-clojurescript">(<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">draw-onclick</span>
@@ -673,14 +683,15 @@ worked is retrieved from the map of possible starting row types.
 
 <pre class="src src-clojurescript">(<span style="color: #00ffff;">def</span> <span style="color: #63b8ff;">row-types</span>
   <span style="color: #cd8162;">"A map from the names of the row types (as entered by the user)</span>
-<span style="color: #cd8162;">to the actual row type functions."</span>
+<span style="color: #cd8162;">  to the actual row type functions."</span>
   {<span style="color: #cd8162;">"middle-cell"</span> middle-cell
    <span style="color: #cd8162;">"white-row"</span> white-row
    <span style="color: #cd8162;">"black-row"</span> black-row
    <span style="color: #cd8162;">"rand-row"</span> rand-row})
 
 (<span style="color: #00ffff;">defn</span> <span style="color: #63b8ff;">get-row</span>
-  <span style="color: #cd8162;">"Returns a row based on the given row type string."</span>
+  <span style="color: #cd8162;">"Returns a row based on the given row type string. </span>
+<span style="color: #cd8162;">   Returns an all white row if the row type is unrecognised"</span>
   [row-type]
   (<span style="color: #98fb98; font-weight: bold;">if</span> (row-types row-type)
     ((row-types row-type))
